@@ -41,6 +41,20 @@ const SITE_CONFIG = {
   /* ---------- ธีมสี ---------- */
   accentColor: '#A9814B',             // สีหลักของเว็บ (โทนทองแชมเปญ)
 
+  /* ---------- Firebase (สำหรับ real-time sync ข้ามเครื่อง) ---------- */
+  // คัดลอกค่าจากหน้า Firebase Console (Project settings > Your apps > Web app)
+  // มาแปะแทนค่าด้านล่างนี้ทั้งก้อน ถ้ายังไม่ได้ตั้งค่า Firebase ให้เว้นว่างไว้แบบนี้ได้
+  // เว็บจะยังทำงานปกติ แต่การตั้งค่าจะไม่ sync ข้ามเครื่อง (แบบเดิม)
+  firebase: {
+    apiKey: 'AIzaSyAqkTw5j53jgEAK6RqYYlrN_I_mWUhc_lU',
+    authDomain: 'bkkphoto8117-e7826.firebaseapp.com',
+    databaseURL: 'https://bkkphoto8117-e7826-default-rtdb.asia-southeast1.firebasedatabase.app',
+    projectId: 'bkkphoto8117-e7826',
+    storageBucket: 'bkkphoto8117-e7826.firebasestorage.app',
+    messagingSenderId: '870859961318',
+    appId: '1:870859961318:web:5284fa0173d39c3cf69c27',
+  },
+
   /* ---------- อื่นๆ ---------- */
   defaultLang: 'th',                  // 'th' หรือ 'en'
   defaultTheme: 'light',              // 'light' หรือ 'dark'
