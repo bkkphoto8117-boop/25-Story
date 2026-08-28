@@ -473,8 +473,8 @@
       <input type="text" id="newSiteIdInput" placeholder="mind-aom-2569">
     </div>
     <div class="admin-field">
-      <label>ลิงก์โฟลเดอร์ Google Drive ของงานนี้</label>
-      <input type="text" id="newSiteFolderInput" placeholder="วางลิงก์โฟลเดอร์ Google Drive ที่นี่">
+      <label>ลิงก์โฟลเดอร์ Google Drive ของงานนี้ (เว้นว่างไว้ได้ ให้ลูกค้าตั้งเองทีหลัง)</label>
+      <input type="text" id="newSiteFolderInput" placeholder="วางลิงก์โฟลเดอร์ Google Drive ที่นี่ หรือเว้นว่างไว้ก่อนก็ได้">
     </div>
     <div class="admin-field">
       <label>รหัสผ่านหลังบ้านของงานนี้</label>
@@ -680,6 +680,17 @@ function renderAdminPreview(files){
 }
 
 async function refresh(){
+  if(!FOLDER_ID){
+    currentFiles = [];
+    renderMeta(currentFiles);
+    renderGrid(currentFiles);
+    renderAdminPreview(currentFiles);
+    updateSelectAllLink();
+    showBanner('loading', lang==='th'
+      ? 'ยังไม่ได้ตั้งค่าอัลบั้ม Google Drive — ไปที่หลังบ้าน > อัลบั้ม Google Drive เพื่อวางลิงก์โฟลเดอร์'
+      : 'No Google Drive album set yet — go to Admin > Google Drive Album to add a folder link');
+    return;
+  }
   try{
     const files = await fetchDriveFiles();
     currentFiles = files;
@@ -951,7 +962,11 @@ function applySharedSettings(data){
   const sub = data.eventSub || SITE_CONFIG.eventSub;
   const couple = data.coupleNames || SITE_CONFIG.coupleNames;
   const date = data.eventDate || SITE_CONFIG.eventDate;
-  const folder = data.folderId || DEFAULT_FOLDER_ID;
+  // แยกให้ชัดระหว่าง "ยังไม่เคยมีข้อมูลเลย" (key ไม่มีอยู่จริง เช่น เว็บเดี่ยวที่ยังไม่ตั้งค่า Firebase
+  // หรือยังไม่เคยบันทึกอะไรเลย) กับ "ตั้งใจเว้นว่างไว้" (เช่น งานที่ super admin สร้างแบบยังไม่ใส่
+  // โฟลเดอร์) — กรณีแรก fallback ไปใช้โฟลเดอร์เดโมจาก config.js กรณีหลังให้ถือว่า "ยังไม่มีอัลบั้ม"
+  const hasFolderField = Object.prototype.hasOwnProperty.call(data, 'folderId');
+  const folder = hasFolderField ? data.folderId : DEFAULT_FOLDER_ID;
   const accent = data.accentColor || SITE_CONFIG.accentColor;
   const logo = data.logoDataUrl || '';
   const font = data.coupleFont || SITE_CONFIG.coupleFont;
@@ -970,7 +985,7 @@ function applySharedSettings(data){
   const isub = document.getElementById('inputEventSub'); if(isub && document.activeElement !== isub) isub.value = sub || '';
   const icn = document.getElementById('inputCoupleNames'); if(icn && document.activeElement !== icn) icn.value = couple || '';
   const ied = document.getElementById('inputEventDate'); if(ied && document.activeElement !== ied) ied.value = date || '';
-  const fi = document.getElementById('folderInput'); if(fi && document.activeElement !== fi) fi.value = `https://drive.google.com/drive/folders/${folder}`;
+  const fi = document.getElementById('folderInput'); if(fi && document.activeElement !== fi) fi.value = folder ? `https://drive.google.com/drive/folders/${folder}` : '';
   if(logo) document.getElementById('logoPreview').innerHTML = `<img src="${logo}">`;
   fontSelect.value = font; fontPreview.style.fontFamily = font;
 
@@ -1131,14 +1146,17 @@ document.getElementById('createSiteBtn').addEventListener('click', async () => {
 
   const rawId = document.getElementById('newSiteIdInput').value;
   const newId = sanitizeSiteId(rawId);
-  const folderRaw = document.getElementById('newSiteFolderInput').value;
-  const parsedFolder = parseFolderId(folderRaw);
+  const folderRaw = document.getElementById('newSiteFolderInput').value.trim();
+  let parsedFolder = '';
+  if(folderRaw){
+    parsedFolder = parseFolderId(folderRaw);
+    if(!parsedFolder){ status.style.color='var(--err)'; status.textContent='ลิงก์โฟลเดอร์ Google Drive ไม่ถูกต้อง (จะเว้นว่างไว้ให้ลูกค้าตั้งเองทีหลังก็ได้)'; return; }
+  }
   const pass = document.getElementById('newSitePasswordInput').value.trim();
   const brand = document.getElementById('newSiteBrandInput').value.trim();
   const couple = document.getElementById('newSiteCoupleInput').value.trim();
 
   if(!newId){ status.style.color='var(--err)'; status.textContent='กรอกรหัสงานก่อน'; return; }
-  if(!parsedFolder){ status.style.color='var(--err)'; status.textContent='ลิงก์โฟลเดอร์ Google Drive ไม่ถูกต้อง'; return; }
   if(!pass){ status.style.color='var(--err)'; status.textContent='ตั้งรหัสผ่านของงานนี้ก่อน'; return; }
   if(!firebaseReady){ status.style.color='var(--err)'; status.textContent='ยังไม่ได้ตั้งค่า Firebase ใน config.js'; return; }
 
