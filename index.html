@@ -22,6 +22,9 @@
     --chip-bg: rgba(30,26,20,0.72);
     --err: #A6483B;
     --couple-font: 'Cormorant Garamond', serif;
+    --radius-lg: 26px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
   }
   body.dark{
     --bg: #171512;
@@ -34,19 +37,25 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
-    background:var(--bg); font-family:'Inter', sans-serif; color:var(--ink);
-    min-height:100vh; transition: background 0.25s, color 0.25s; padding-bottom:86px;
+    background:var(--bg); background-size:cover; background-position:center; background-attachment:fixed;
+    font-family:'Inter', sans-serif; color:var(--ink);
+    min-height:100vh; transition: background-color 0.25s, color 0.25s; padding-bottom:86px;
   }
 
   .page{ max-width:520px; margin:0 auto; padding:16px 14px 0; }
   .page.hidden{ display:none; }
 
   .gallery-card{
-    background:var(--card); border-radius:26px; padding:20px 18px 18px;
+    background:var(--card); border-radius:var(--radius-lg); padding:20px 18px 18px;
     box-shadow:0 20px 50px -24px rgba(30,26,20,0.28), 0 0 0 1px var(--line);
   }
 
   .top-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:16px;}
+  .top-row.centered{ flex-direction:column; gap:10px; position:relative; padding-top:2px; }
+  .top-row.centered .brand{ flex-direction:column; text-align:center; gap:8px; }
+  .top-row.centered .logo-circle{ width:60px; height:60px; font-size:26px; }
+  .top-row.centered .brand-name{ white-space:normal; }
+  .top-row.centered .top-actions{ position:absolute; top:0; right:0; }
   .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
   .logo-circle{
     width:38px; height:38px; border-radius:50%; border:1.5px solid var(--accent);
@@ -112,7 +121,7 @@
 
   .grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
   .grid.dense{ grid-template-columns:repeat(4, 1fr); }
-  .cell{ position:relative; aspect-ratio:3/4; border-radius:14px; overflow:hidden; background:var(--accent-soft); cursor:pointer; }
+  .cell{ position:relative; aspect-ratio:3/4; border-radius:var(--radius-md); overflow:hidden; background:var(--accent-soft); cursor:pointer; }
   .cell img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.2s;}
   .cell:hover img{ transform:scale(1.05); }
   .cell .badge{
@@ -130,7 +139,7 @@
 
   .bottom-toolbar{
     position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-    width:min(94vw, 480px); background:var(--card); border-radius:20px;
+    width:min(94vw, 480px); background:var(--card); border-radius:var(--radius-lg);
     box-shadow:0 20px 40px -18px rgba(30,26,20,0.35), 0 0 0 1px var(--line);
     display:flex; padding:10px 4px; z-index:50;
   }
@@ -147,7 +156,7 @@
     display:none; align-items:center; justify-content:center; padding:24px;
   }
   .modal-overlay.open{ display:flex; }
-  .modal-box{ background:var(--card); border-radius:18px; padding:22px; text-align:center; max-width:320px; width:100%; position:relative;}
+  .modal-box{ background:var(--card); border-radius:var(--radius-lg); padding:22px; text-align:center; max-width:320px; width:100%; position:relative;}
   .modal-close{
     position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%;
     background:var(--accent-soft); border:none; cursor:pointer; color:var(--ink);
@@ -174,9 +183,18 @@
 
   .lightbox{ position:fixed; inset:0; background:rgba(15,14,12,0.94); z-index:220; display:none; align-items:center; justify-content:center; padding:20px;}
   .lightbox.open{ display:flex; }
-  .lightbox-frame{ position:relative; max-width:min(92vw,560px); max-height:86vh; background:#000; border-radius:14px; overflow:hidden;}
+  .lightbox-frame{ position:relative; max-width:min(92vw,560px); max-height:86vh; background:#000; border-radius:var(--radius-md); overflow:hidden;}
   .lightbox-frame img{ display:block; max-width:100%; max-height:86vh; object-fit:contain; }
   .lightbox-close{ position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.55); color:#fff; border:none; font-size:16px; cursor:pointer; }
+  .lightbox-nav{
+    position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%;
+    background:rgba(0,0,0,0.45); color:#fff; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; z-index:5;
+  }
+  .lightbox-nav svg{ width:20px; height:20px; }
+  .lightbox-nav-prev{ left:12px; }
+  .lightbox-nav-next{ right:12px; }
+  @media (hover:hover){ .lightbox-nav:hover{ background:rgba(0,0,0,0.65); } }
   .lightbox-qr{ position:absolute; bottom:12px; right:12px; background:#fff; border-radius:10px; padding:7px; display:flex; flex-direction:column; align-items:center; gap:3px; box-shadow:0 6px 18px rgba(0,0,0,0.35);}
   .lightbox-qr .qr-box{ width:70px; height:70px; }
   .lightbox-qr .qr-label{ font-family:'Noto Serif Thai', serif; font-size:8px; font-weight:600; color:#2B2823; white-space:nowrap;}
@@ -189,7 +207,7 @@
     font-family:'Noto Serif Thai', serif; font-size:11.5px; font-weight:600; background:none; border:none;
     color:var(--ink-soft); cursor:pointer; text-decoration:underline;
   }
-  .admin-card{ background:var(--card); border-radius:20px; padding:20px; box-shadow:0 20px 50px -24px rgba(30,26,20,0.28), 0 0 0 1px var(--line); margin-bottom:16px;}
+  .admin-card{ background:var(--card); border-radius:var(--radius-lg); padding:20px; box-shadow:0 20px 50px -24px rgba(30,26,20,0.28), 0 0 0 1px var(--line); margin-bottom:16px;}
   .admin-card h2{ font-family:'Noto Serif Thai', serif; font-size:14px; margin-bottom:12px; color:var(--ink);}
   .admin-field{ margin-bottom:12px; }
   .admin-field label{ display:block; font-size:10.5px; color:var(--ink-soft); margin-bottom:5px; font-family:'Noto Serif Thai', serif;}
@@ -255,7 +273,7 @@
   .font-preview{ font-size:20px; margin-top:6px; color:var(--ink); }
 
   .admin-photo-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  .admin-photo-cell{ aspect-ratio:1/1; border-radius:8px; overflow:hidden; background:var(--accent-soft);}
+  .admin-photo-cell{ aspect-ratio:1/1; border-radius:var(--radius-sm); overflow:hidden; background:var(--accent-soft);}
   .admin-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block;}
 </style>
 </head>
@@ -356,6 +374,12 @@
       <div class="qr-label" id="lightboxQrLabel">SCAN เก็บภาพนี้</div>
     </div>
   </div>
+  <button class="lightbox-nav lightbox-nav-prev" id="lightboxPrev" aria-label="Previous">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button class="lightbox-nav lightbox-nav-next" id="lightboxNext" aria-label="Next">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
 </div>
 
 <!-- ================= ADMIN PANEL ================= -->
@@ -416,11 +440,72 @@
   </div>
 
   <div class="admin-card">
-    <h2>โทนสี UI</h2>
+    <h2>สีหลัก (Accent)</h2>
     <div class="swatch-row" id="swatchRow">
       <label class="swatch-custom" title="กำหนดสีเอง">
         <input type="color" id="customColorInput" value="#A9814B">
       </label>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>พื้นหลังหน้าเว็บ</h2>
+    <div class="admin-field">
+      <label>สีพื้นหลัง</label>
+      <div class="swatch-row" id="bgSwatchRow">
+        <label class="swatch-custom" title="กำหนดสีเอง">
+          <input type="color" id="customBgColorInput" value="#F7F3EC">
+        </label>
+      </div>
+    </div>
+    <div class="admin-field">
+      <label>รูปแบบพื้นหลัง</label>
+      <select id="bgStyleSelect">
+        <option value="solid">สีพื้นเรียบ</option>
+        <option value="gradient">ไล่เฉดสี (พื้นหลัง → สีหลัก)</option>
+        <option value="image">รูปพื้นหลังกำหนดเอง</option>
+      </select>
+    </div>
+    <div class="admin-field" id="bgImageUploadWrap" style="display:none;">
+      <label>อัปโหลดรูปพื้นหลัง (ไม่เกิน 2MB)</label>
+      <label class="logo-upload-btn">
+        เลือกรูปพื้นหลัง
+        <input type="file" id="bgImageFileInput" accept="image/*" style="display:none;">
+      </label>
+    </div>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="saveBgBtn">บันทึก</button>
+      <span class="admin-status" id="bgSaveStatus"></span>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>รูปแบบขอบมุม</h2>
+    <div class="admin-field">
+      <select id="cornerStyleSelect">
+        <option value="square">เหลี่ยม</option>
+        <option value="soft">มน (ค่าเริ่มต้น)</option>
+        <option value="round">มนมาก</option>
+        <option value="pill">มนสุด (แคปซูล)</option>
+      </select>
+    </div>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="saveCornerBtn">บันทึก</button>
+      <span class="admin-status" id="cornerSaveStatus"></span>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>ตำแหน่งโลโก้ &amp; ชื่อ</h2>
+    <div class="admin-field">
+      <select id="headerLayoutSelect">
+        <option value="row">แถบบน: โลโก้ซ้าย ปุ่มขวา (ค่าเริ่มต้น)</option>
+        <option value="centered">กึ่งกลาง: โลโก้ &amp; ชื่ออยู่กลางด้านบน</option>
+      </select>
+    </div>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="saveHeaderLayoutBtn">บันทึก</button>
+      <span class="admin-status" id="headerLayoutSaveStatus"></span>
     </div>
   </div>
 
@@ -721,6 +806,9 @@ const lightbox = document.getElementById('lightbox');
 const lightboxImg = document.getElementById('lightboxImg');
 const lightboxQr = document.getElementById('lightboxQr');
 const lightboxQrLabel = document.getElementById('lightboxQrLabel');
+const lightboxPrevBtn = document.getElementById('lightboxPrev');
+const lightboxNextBtn = document.getElementById('lightboxNext');
+let currentLightboxIndex = -1;
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 lightbox.addEventListener('click', (e) => { if(e.target===lightbox) closeLightbox(); });
 
@@ -735,14 +823,43 @@ function buildShareUrl(){
 }
 
 function openLightbox(fileId){
-  lightboxImg.src = thumbUrl(fileId, 1200);
-  lightboxQr.innerHTML = '';
-  lightboxQrLabel.textContent = STRINGS[lang].scanSave;
-  const viewLink = `https://drive.google.com/file/d/${fileId}/view`;
-  if(window.QRCode){ new QRCode(lightboxQr, { text: viewLink, width:70, height:70, colorDark:'#2B2823', colorLight:'#ffffff' }); }
+  currentLightboxIndex = currentFiles.findIndex(f => f.id === fileId);
+  renderLightbox();
   lightbox.classList.add('open');
 }
+function renderLightbox(){
+  if(currentLightboxIndex < 0 || currentLightboxIndex >= currentFiles.length) return;
+  const f = currentFiles[currentLightboxIndex];
+  lightboxImg.src = thumbUrl(f.id, 1200);
+  lightboxQr.innerHTML = '';
+  lightboxQrLabel.textContent = STRINGS[lang].scanSave;
+  const viewLink = `https://drive.google.com/file/d/${f.id}/view`;
+  if(window.QRCode){ new QRCode(lightboxQr, { text: viewLink, width:70, height:70, colorDark:'#2B2823', colorLight:'#ffffff' }); }
+  lightboxPrevBtn.style.visibility = currentLightboxIndex > 0 ? 'visible' : 'hidden';
+  lightboxNextBtn.style.visibility = currentLightboxIndex < currentFiles.length - 1 ? 'visible' : 'hidden';
+}
+function lightboxPrev(){ if(currentLightboxIndex > 0){ currentLightboxIndex--; renderLightbox(); } }
+function lightboxNext(){ if(currentLightboxIndex < currentFiles.length - 1){ currentLightboxIndex++; renderLightbox(); } }
 function closeLightbox(){ lightbox.classList.remove('open'); lightboxImg.src=''; }
+
+lightboxPrevBtn.addEventListener('click', (e) => { e.stopPropagation(); lightboxPrev(); });
+lightboxNextBtn.addEventListener('click', (e) => { e.stopPropagation(); lightboxNext(); });
+
+document.addEventListener('keydown', (e) => {
+  if(!lightbox.classList.contains('open')) return;
+  if(e.key === 'ArrowLeft') lightboxPrev();
+  if(e.key === 'ArrowRight') lightboxNext();
+});
+
+// ---- swipe ซ้าย/ขวา บนมือถือ ----
+let touchStartX = null;
+lightbox.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive:true });
+lightbox.addEventListener('touchend', (e) => {
+  if(touchStartX === null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(Math.abs(dx) > 40){ dx > 0 ? lightboxPrev() : lightboxNext(); }
+  touchStartX = null;
+}, { passive:true });
 
 // ---- QR modal ----
 const qrModal = document.getElementById('qrModal');
@@ -807,6 +924,7 @@ themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('dark');
   themeKnob.textContent = document.body.classList.contains('dark') ? '🌙' : '☀️';
   saveLocalPref('theme-mode', document.body.classList.contains('dark') ? 'dark' : 'light');
+  applyBackgroundVisual(latestSharedSettings.bgColor || '#F7F3EC', latestSharedSettings.bgStyle || 'solid', latestSharedSettings.bgImageDataUrl || '');
 });
 
 // ---- language ----
@@ -866,6 +984,130 @@ THEME_PRESETS.forEach(t => {
 });
 document.getElementById('customColorInput').addEventListener('input', (e) => applyAccent(e.target.value));
 document.getElementById('customColorInput').addEventListener('change', (e) => saveSharedSettings({ accentColor: e.target.value }));
+
+// ---- พื้นหลังหน้าเว็บ ----
+const BG_PRESETS = [
+  { name:'ครีมอบอุ่น (ดีฟอลต์)', color:'#F7F3EC' },
+  { name:'ขาวสะอาด', color:'#FFFFFF' },
+  { name:'ชมพูอ่อนหวาน', color:'#FBEEF0' },
+  { name:'เขียวพาสเทล', color:'#EEF3EA' },
+  { name:'ฟ้าพาสเทล', color:'#EAF1F6' },
+];
+let pendingBgImageDataUrl = null;
+
+// ปรับพื้นหลังจริงบนหน้าจอ ใช้ทั้งตอนพรีวิวระหว่างแก้ และตอนโหลดค่าที่บันทึกไว้แล้ว
+// หมายเหตุ: ในโหมดมืดจะไม่ใช้สี/รูปพื้นหลังที่ตั้งไว้ เพื่อกันปัญหาสีอ่านยาก ใช้โทนมืดมาตรฐานแทนเสมอ
+function applyBackgroundVisual(bgColor, bgStyle, bgImageDataUrl){
+  const isDark = document.body.classList.contains('dark');
+  if(isDark){
+    document.documentElement.style.removeProperty('--bg');
+    document.body.style.backgroundImage = '';
+    return;
+  }
+  const color = bgColor || '#F7F3EC';
+  document.documentElement.style.setProperty('--bg', color);
+  if(bgStyle === 'image' && bgImageDataUrl){
+    document.body.style.backgroundImage = `url(${bgImageDataUrl})`;
+  } else if(bgStyle === 'gradient'){
+    const accent = latestSharedSettings.accentColor || SITE_CONFIG.accentColor;
+    document.body.style.backgroundImage = `linear-gradient(160deg, ${color} 0%, ${hexToRgba(accent, 0.28)} 100%)`;
+  } else {
+    document.body.style.backgroundImage = '';
+  }
+}
+function previewBgFromInputs(){
+  const color = document.getElementById('customBgColorInput').value;
+  const style = document.getElementById('bgStyleSelect').value;
+  const img = style === 'image' ? (pendingBgImageDataUrl || latestSharedSettings.bgImageDataUrl || '') : '';
+  applyBackgroundVisual(color, style, img);
+}
+const bgSwatchRow = document.getElementById('bgSwatchRow');
+BG_PRESETS.forEach(t => {
+  const sw = document.createElement('div');
+  sw.className = 'swatch';
+  sw.style.background = t.color;
+  sw.dataset.color = t.color;
+  sw.title = t.name;
+  sw.addEventListener('click', () => {
+    document.getElementById('customBgColorInput').value = t.color;
+    document.querySelectorAll('#bgSwatchRow .swatch').forEach(s => s.classList.toggle('selected', s.dataset.color.toLowerCase()===t.color.toLowerCase()));
+    previewBgFromInputs();
+  });
+  bgSwatchRow.insertBefore(sw, bgSwatchRow.lastElementChild);
+});
+document.getElementById('customBgColorInput').addEventListener('input', previewBgFromInputs);
+document.getElementById('bgStyleSelect').addEventListener('change', () => {
+  document.getElementById('bgImageUploadWrap').style.display = document.getElementById('bgStyleSelect').value === 'image' ? 'block' : 'none';
+  previewBgFromInputs();
+});
+document.getElementById('bgImageFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 2*1024*1024){
+    alert(lang==='th' ? 'ไฟล์ใหญ่เกินไป กรุณาใช้รูปที่เล็กกว่า 2MB' : 'File too large, please use an image under 2MB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    pendingBgImageDataUrl = reader.result;
+    previewBgFromInputs();
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById('saveBgBtn').addEventListener('click', async () => {
+  const status = document.getElementById('bgSaveStatus');
+  const color = document.getElementById('customBgColorInput').value;
+  const style = document.getElementById('bgStyleSelect').value;
+  if(style === 'image' && !pendingBgImageDataUrl && !latestSharedSettings.bgImageDataUrl){
+    status.style.color='var(--err)'; status.textContent='กรุณาเลือกรูปพื้นหลังก่อน'; return;
+  }
+  status.style.color=''; status.textContent='กำลังบันทึก...';
+  const patch = { bgColor: color, bgStyle: style };
+  if(style === 'image' && pendingBgImageDataUrl) patch.bgImageDataUrl = pendingBgImageDataUrl;
+  await saveSharedSettings(patch);
+  pendingBgImageDataUrl = null;
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
+});
+
+// ---- รูปแบบขอบมุม ----
+const CORNER_PRESETS = {
+  square: { lg:'8px',  md:'6px',  sm:'6px' },
+  soft:   { lg:'26px', md:'14px', sm:'8px' },
+  round:  { lg:'34px', md:'20px', sm:'12px' },
+  pill:   { lg:'44px', md:'28px', sm:'16px' },
+};
+function applyCornerStyle(style){
+  const p = CORNER_PRESETS[style] || CORNER_PRESETS.soft;
+  document.documentElement.style.setProperty('--radius-lg', p.lg);
+  document.documentElement.style.setProperty('--radius-md', p.md);
+  document.documentElement.style.setProperty('--radius-sm', p.sm);
+  const sel = document.getElementById('cornerStyleSelect');
+  if(sel && document.activeElement !== sel) sel.value = style || 'soft';
+}
+document.getElementById('cornerStyleSelect').addEventListener('change', (e) => applyCornerStyle(e.target.value));
+document.getElementById('saveCornerBtn').addEventListener('click', async () => {
+  const status = document.getElementById('cornerSaveStatus');
+  const style = document.getElementById('cornerStyleSelect').value;
+  status.textContent = 'กำลังบันทึก...';
+  await saveSharedSettings({ cornerStyle: style });
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
+});
+
+// ---- ตำแหน่งโลโก้ & ชื่อ ----
+function applyHeaderLayout(layout){
+  const topRow = document.querySelector('.top-row');
+  if(topRow) topRow.classList.toggle('centered', layout === 'centered');
+  const sel = document.getElementById('headerLayoutSelect');
+  if(sel && document.activeElement !== sel) sel.value = layout || 'row';
+}
+document.getElementById('headerLayoutSelect').addEventListener('change', (e) => applyHeaderLayout(e.target.value));
+document.getElementById('saveHeaderLayoutBtn').addEventListener('click', async () => {
+  const status = document.getElementById('headerLayoutSaveStatus');
+  const layout = document.getElementById('headerLayoutSelect').value;
+  status.textContent = 'กำลังบันทึก...';
+  await saveSharedSettings({ headerLayout: layout });
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
+});
 
 // ---- font picker ----
 const fontSelect = document.getElementById('fontSelect');
@@ -986,6 +1228,11 @@ function applySharedSettings(data){
   const accent = data.accentColor || SITE_CONFIG.accentColor;
   const logo = data.logoDataUrl || '';
   const font = data.coupleFont || SITE_CONFIG.coupleFont;
+  const bgColor = data.bgColor || '#F7F3EC';
+  const bgStyle = data.bgStyle || 'solid';
+  const bgImage = data.bgImageDataUrl || '';
+  const cornerStyle = data.cornerStyle || 'soft';
+  const headerLayout = data.headerLayout || 'row';
 
   if(brand){ brandNameLine.textContent = brand; if(!logo) logoLetter.textContent = brand.trim().charAt(0).toUpperCase(); }
   eventSubValue = sub;
@@ -996,6 +1243,9 @@ function applySharedSettings(data){
   applyAccent(accent);
   if(logo) applyLogo(logo);
   document.documentElement.style.setProperty('--couple-font', font);
+  applyBackgroundVisual(bgColor, bgStyle, bgImage);
+  applyCornerStyle(cornerStyle);
+  applyHeaderLayout(headerLayout);
 
   const ib = document.getElementById('inputBrand'); if(ib && document.activeElement !== ib) ib.value = brand || '';
   const isub = document.getElementById('inputEventSub'); if(isub && document.activeElement !== isub) isub.value = sub || '';
@@ -1004,6 +1254,10 @@ function applySharedSettings(data){
   const fi = document.getElementById('folderInput'); if(fi && document.activeElement !== fi) fi.value = folder ? `https://drive.google.com/drive/folders/${folder}` : '';
   if(logo) document.getElementById('logoPreview').innerHTML = `<img src="${logo}">`;
   fontSelect.value = font; fontPreview.style.fontFamily = font;
+  const cbi = document.getElementById('customBgColorInput'); if(cbi && document.activeElement !== cbi) cbi.value = bgColor;
+  const bss = document.getElementById('bgStyleSelect'); if(bss && document.activeElement !== bss) bss.value = bgStyle;
+  document.getElementById('bgImageUploadWrap').style.display = bgStyle === 'image' ? 'block' : 'none';
+  document.querySelectorAll('#bgSwatchRow .swatch').forEach(s => s.classList.toggle('selected', s.dataset.color.toLowerCase() === bgColor.toLowerCase()));
 
   applyLangStrings();
   if(folderChanged) refresh();
