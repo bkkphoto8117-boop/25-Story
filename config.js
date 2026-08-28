@@ -25,7 +25,7 @@ const SITE_CONFIG = {
   /* ---------- รหัสผ่านผู้ดูแลระบบ (Super Admin) ---------- */
   // ใช้เฉพาะตอนเข้าลิงก์แบบ ?superadmin=1 เพื่อสร้าง/จัดการ "งานใหม่" หลายงานจากหน้าเว็บเดียว
   // ตั้งให้คาดเดายากและไม่บอกใคร ต่างจากรหัสผ่านหลังบ้านของลูกค้าแต่ละคน
-  superAdminPassword:2569,
+  superAdminPassword: '2569',
 
   /* ---------- Google Drive ---------- */
   // API Key จาก Google Cloud Console (เปิดใช้งาน Google Drive API)
