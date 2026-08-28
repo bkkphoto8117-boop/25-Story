@@ -226,6 +226,12 @@
     background:none; color:var(--accent); border:1px solid var(--accent); padding:5px 12px;
     border-radius:999px; cursor:pointer; white-space:nowrap;
   }
+  .sites-list-actions{ display:flex; gap:8px; flex-shrink:0; }
+  .sites-list-delete{
+    font-family:'Noto Serif Thai', serif; font-size:11px; font-weight:600;
+    background:none; color:var(--err); border:1px solid var(--err); padding:5px 12px;
+    border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
 
   .logo-upload-row{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
   .logo-preview{
@@ -718,6 +724,16 @@ const lightboxQrLabel = document.getElementById('lightboxQrLabel');
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 lightbox.addEventListener('click', (e) => { if(e.target===lightbox) closeLightbox(); });
 
+// สร้างลิงก์สำหรับแชร์/ทำ QR โดยคงพารามิเตอร์ ?site=xxx ไว้เสมอ (สำคัญมากตอนใช้ระบบหลายงาน)
+// แต่ตัดพารามิเตอร์อื่นที่ไม่เกี่ยวข้อง เช่น ?superadmin=1 ออก กันหลุดไปโผล่ในลิงก์ที่ส่งให้แขก
+function buildShareUrl(){
+  const url = new URL(window.location.href);
+  const site = url.searchParams.get('site');
+  url.search = '';
+  if(site) url.searchParams.set('site', site);
+  return url.toString();
+}
+
 function openLightbox(fileId){
   lightboxImg.src = thumbUrl(fileId, 1200);
   lightboxQr.innerHTML = '';
@@ -736,7 +752,7 @@ qrModal.addEventListener('click', (e) => { if(e.target===qrModal) closeQrModal()
 btnQr.addEventListener('click', openQrModal);
 function openQrModal(){
   qrModalHolder.innerHTML = '';
-  const pageUrl = window.location.href.split('?')[0];
+  const pageUrl = buildShareUrl();
   if(window.QRCode){ new QRCode(qrModalHolder, { text: pageUrl, width:160, height:160, colorDark:'#2B2823', colorLight:'#ffffff' }); }
   qrModal.classList.add('open');
 }
@@ -1220,10 +1236,25 @@ async function loadSitesList(){
           <div class="sites-list-name">${s.coupleNames || s.brand || '(ยังไม่ตั้งชื่อ)'}</div>
           <div class="sites-list-id">${id}</div>
         </div>
-        <button class="sites-list-copy">คัดลอกลิงก์</button>
+        <div class="sites-list-actions">
+          <button class="sites-list-copy">คัดลอกลิงก์</button>
+          <button class="sites-list-delete">ลบ</button>
+        </div>
       `;
       row.querySelector('.sites-list-copy').addEventListener('click', () => {
         navigator.clipboard?.writeText(link).catch(() => {});
+      });
+      row.querySelector('.sites-list-delete').addEventListener('click', async () => {
+        const ok = window.confirm(
+          `ยืนยันลบงาน "${s.coupleNames || s.brand || id}" (${id}) ?\n\nการลบนี้จะลบการตั้งค่าทั้งหมดของงานนี้ออกจาก Firebase ถาวร กู้คืนไม่ได้ และลูกค้าที่ใช้ลิงก์นี้อยู่จะเข้าใช้งานต่อไม่ได้`
+        );
+        if(!ok) return;
+        try{
+          await db.ref(`sites/${id}`).remove();
+          loadSitesList();
+        }catch(err){
+          status.textContent = 'ลบไม่สำเร็จ: ' + (err.message || err);
+        }
       });
       wrap.appendChild(row);
     });
