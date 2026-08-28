@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>25Story Wedding Studio — Gallery</title>
+<title>Bangkok Wedding Studio — Gallery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Playfair+Display:ital,wght@0,600;1,600&family=Prompt:wght@400;600&family=Mali:wght@500;700&family=Noto+Serif+Thai:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -204,6 +204,28 @@
     background:var(--ink); color:var(--card); border:none; padding:9px 18px; border-radius:999px; cursor:pointer;
   }
   .admin-status{ font-size:10.5px; color:var(--ink-soft); }
+
+  .new-site-result{
+    margin-top:14px; padding:12px; border-radius:10px; background:var(--bg); border:1px solid var(--line);
+  }
+  .new-site-result-label{ font-size:11px; color:var(--ink-soft); margin-bottom:8px; }
+  .new-site-link-row{ display:flex; gap:8px; }
+  .new-site-link-row input{
+    flex:1; font-size:11.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink);
+  }
+  .sites-list-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 0; border-bottom:1px solid var(--line); font-size:12px;
+  }
+  .sites-list-item:last-child{ border-bottom:none; }
+  .sites-list-name{ font-weight:600; }
+  .sites-list-id{ font-size:10.5px; color:var(--ink-soft); }
+  .sites-list-copy{
+    font-family:'Noto Serif Thai', serif; font-size:11px; font-weight:600;
+    background:none; color:var(--accent); border:1px solid var(--accent); padding:5px 12px;
+    border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
 
   .logo-upload-row{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
   .logo-preview{
@@ -421,6 +443,71 @@
   <div class="admin-card">
     <h2>รูปทั้งหมดในอัลบั้ม (พรีวิว)</h2>
     <div class="admin-photo-grid" id="adminPhotoGrid"></div>
+  </div>
+</div>
+
+<!-- ================= SUPER ADMIN PANEL (สร้างงานใหม่) ================= -->
+<div class="modal-overlay" id="superAdminLoginModal">
+  <div class="modal-box">
+    <button class="modal-close" id="superAdminLoginClose">✕</button>
+    <h3>ผู้ดูแลระบบ (Super Admin)</h3>
+    <div class="login-field">
+      <label>รหัสผ่านผู้ดูแลระบบ</label>
+      <input type="password" id="superAdminPasswordInput" placeholder="กรอกรหัสผ่านผู้ดูแลระบบ">
+    </div>
+    <button class="login-submit" id="superAdminSubmitBtn">เข้าสู่ระบบ</button>
+    <div class="login-error" id="superAdminLoginError">รหัสผ่านไม่ถูกต้อง ลองอีกครั้ง</div>
+  </div>
+</div>
+
+<div class="admin-wrap" id="superAdminWrap">
+  <div class="admin-top-bar">
+    <button id="superAdminBackBtn">← กลับไปหน้าแกลเลอรี</button>
+    <button id="superAdminLogoutBtn">ออกจากระบบ</button>
+  </div>
+
+  <div class="admin-card">
+    <h2>สร้างงานใหม่</h2>
+    <div class="admin-field">
+      <label>รหัสงาน (ใช้ในลิงก์ ห้ามซ้ำ เช่น mind-aom-2569)</label>
+      <input type="text" id="newSiteIdInput" placeholder="mind-aom-2569">
+    </div>
+    <div class="admin-field">
+      <label>ลิงก์โฟลเดอร์ Google Drive ของงานนี้</label>
+      <input type="text" id="newSiteFolderInput" placeholder="วางลิงก์โฟลเดอร์ Google Drive ที่นี่">
+    </div>
+    <div class="admin-field">
+      <label>รหัสผ่านหลังบ้านของงานนี้</label>
+      <input type="text" id="newSitePasswordInput" placeholder="ตั้งรหัสผ่านให้ลูกค้า">
+    </div>
+    <div class="admin-field">
+      <label>ชื่อสตูดิโอ / แบรนด์</label>
+      <input type="text" id="newSiteBrandInput" placeholder="Bangkok Wedding Studio">
+    </div>
+    <div class="admin-field">
+      <label>ชื่อคู่บ่าวสาว / ชื่ออีเวนต์</label>
+      <input type="text" id="newSiteCoupleInput" placeholder="เช่น กันต์ & แนน">
+    </div>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="createSiteBtn">สร้างงานใหม่</button>
+      <span class="admin-status" id="createSiteStatus"></span>
+    </div>
+    <div class="new-site-result" id="newSiteResult" style="display:none;">
+      <div class="new-site-result-label">ลิงก์สำหรับลูกค้า (ส่งลิงก์นี้ให้ลูกค้า):</div>
+      <div class="new-site-link-row">
+        <input type="text" id="newSiteLinkOutput" readonly>
+        <button class="admin-btn" id="copyNewSiteLinkBtn">คัดลอก</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>งานทั้งหมด</h2>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="refreshSitesBtn">รีเฟรชรายชื่องาน</button>
+      <span class="admin-status" id="sitesListStatus"></span>
+    </div>
+    <div id="sitesListWrap"></div>
   </div>
 </div>
 
@@ -798,7 +885,17 @@ function saveLocalPref(key, value){
 // ---- ค่ากลางที่ทุกคนเห็นร่วมกัน (ชื่อแบรนด์, ชื่อคู่บ่าวสาว, สี, โลโก้, Folder ID, รหัสผ่าน) ----
 // ถ้าตั้งค่า Firebase ไว้ใน config.js จะ sync กันแบบ real-time ข้ามเครื่อง/เบราว์เซอร์ทันที
 // ถ้ายังไม่ได้ตั้งค่า Firebase จะ fallback ไปเก็บใน localStorage ของเครื่องนั้นแทน (ไม่ sync ข้ามเครื่อง)
-const SETTINGS_PATH = 'settings';
+// ใช้ siteId เป็นส่วนหนึ่งของ path เสมอ เพื่อให้หลายเว็บ (หลายงานแต่ง) ใช้ Firebase
+// Project เดียวกันได้โดยข้อมูลไม่ปนกัน — ลำดับความสำคัญ: query string ?site=xxx ในลิงก์
+// (ใช้ตอนแอดมินสร้างงานใหม่ผ่านหน้าเว็บ) > siteId ที่ตั้งไว้ใน config.js > path กลาง 'settings' เดิม
+function sanitizeSiteId(id){
+  return (id || '').toString().trim().replace(/[.#$\[\]\/\s]+/g, '-');
+}
+const urlParams = new URLSearchParams(location.search);
+const querySiteId = urlParams.get('site');
+const isSuperAdminUrl = urlParams.has('superadmin');
+const SITE_ID = sanitizeSiteId(querySiteId || SITE_CONFIG.siteId);
+const SETTINGS_PATH = SITE_ID ? `sites/${SITE_ID}/settings` : 'settings';
 let db = null;
 let firebaseReady = false;
 let latestSharedSettings = {};
@@ -980,11 +1077,147 @@ function showAdmin(){
 }
 function showGuest(){
   adminWrap.classList.remove('show');
+  superAdminWrap.classList.remove('show');
   guestPage.classList.remove('hidden');
   bottomToolbar.style.display = 'flex';
 }
 document.getElementById('backToGalleryBtn').addEventListener('click', showGuest);
 document.getElementById('logoutBtn').addEventListener('click', showGuest);
+
+// ---- super admin (สร้างงานใหม่ / จัดการหลายงาน) ----
+// เข้าถึงได้เฉพาะทางลิงก์ที่มี ?superadmin=1 ต่อท้าย เพื่อไม่ให้ลูกค้าทั่วไปเห็นปุ่มนี้เลย
+const superAdminWrap = document.getElementById('superAdminWrap');
+const superAdminLoginModal = document.getElementById('superAdminLoginModal');
+const superAdminPasswordInput = document.getElementById('superAdminPasswordInput');
+const superAdminLoginError = document.getElementById('superAdminLoginError');
+
+function openSuperAdminLogin(){
+  superAdminLoginError.classList.remove('show');
+  superAdminPasswordInput.value = '';
+  superAdminLoginModal.classList.add('open');
+  setTimeout(() => superAdminPasswordInput.focus(), 50);
+}
+document.getElementById('superAdminLoginClose').addEventListener('click', () => {
+  superAdminLoginModal.classList.remove('open');
+});
+superAdminLoginModal.addEventListener('click', (e) => { if(e.target===superAdminLoginModal) superAdminLoginModal.classList.remove('open'); });
+
+document.getElementById('superAdminSubmitBtn').addEventListener('click', () => {
+  const entered = superAdminPasswordInput.value;
+  const correctPassword = SITE_CONFIG.superAdminPassword;
+  if(correctPassword && entered === correctPassword){
+    superAdminLoginModal.classList.remove('open');
+    showSuperAdmin();
+  } else {
+    superAdminLoginError.classList.add('show');
+  }
+});
+superAdminPasswordInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') document.getElementById('superAdminSubmitBtn').click(); });
+
+function showSuperAdmin(){
+  guestPage.classList.add('hidden');
+  bottomToolbar.style.display = 'none';
+  adminWrap.classList.remove('show');
+  superAdminWrap.classList.add('show');
+  loadSitesList();
+}
+document.getElementById('superAdminBackBtn').addEventListener('click', showGuest);
+document.getElementById('superAdminLogoutBtn').addEventListener('click', showGuest);
+
+document.getElementById('createSiteBtn').addEventListener('click', async () => {
+  const status = document.getElementById('createSiteStatus');
+  const resultBox = document.getElementById('newSiteResult');
+  resultBox.style.display = 'none';
+
+  const rawId = document.getElementById('newSiteIdInput').value;
+  const newId = sanitizeSiteId(rawId);
+  const folderRaw = document.getElementById('newSiteFolderInput').value;
+  const parsedFolder = parseFolderId(folderRaw);
+  const pass = document.getElementById('newSitePasswordInput').value.trim();
+  const brand = document.getElementById('newSiteBrandInput').value.trim();
+  const couple = document.getElementById('newSiteCoupleInput').value.trim();
+
+  if(!newId){ status.style.color='var(--err)'; status.textContent='กรอกรหัสงานก่อน'; return; }
+  if(!parsedFolder){ status.style.color='var(--err)'; status.textContent='ลิงก์โฟลเดอร์ Google Drive ไม่ถูกต้อง'; return; }
+  if(!pass){ status.style.color='var(--err)'; status.textContent='ตั้งรหัสผ่านของงานนี้ก่อน'; return; }
+  if(!firebaseReady){ status.style.color='var(--err)'; status.textContent='ยังไม่ได้ตั้งค่า Firebase ใน config.js'; return; }
+
+  status.style.color=''; status.textContent='กำลังสร้าง...';
+  try{
+    const existing = await db.ref(`sites/${newId}/settings`).once('value');
+    if(existing.exists()){
+      status.style.color='var(--err)';
+      status.textContent = 'รหัสงานนี้ถูกใช้ไปแล้ว ลองตั้งชื่ออื่น';
+      return;
+    }
+    await db.ref(`sites/${newId}/settings`).set({
+      folderId: parsedFolder,
+      adminPassword: pass,
+      brand: brand,
+      coupleNames: couple,
+    });
+    const link = `${location.origin}${location.pathname}?site=${newId}`;
+    document.getElementById('newSiteLinkOutput').value = link;
+    resultBox.style.display = 'block';
+    status.textContent = 'สร้างสำเร็จ ✓';
+    loadSitesList();
+  }catch(err){
+    status.style.color='var(--err)';
+    status.textContent = 'สร้างไม่สำเร็จ: ' + (err.message || err);
+  }
+});
+
+document.getElementById('copyNewSiteLinkBtn').addEventListener('click', () => {
+  const input = document.getElementById('newSiteLinkOutput');
+  input.select();
+  navigator.clipboard?.writeText(input.value).catch(() => {});
+});
+
+async function loadSitesList(){
+  const wrap = document.getElementById('sitesListWrap');
+  const status = document.getElementById('sitesListStatus');
+  if(!firebaseReady){
+    wrap.innerHTML = '';
+    status.textContent = 'ยังไม่ได้ตั้งค่า Firebase ใน config.js';
+    return;
+  }
+  status.textContent = 'กำลังโหลด...';
+  try{
+    const snap = await db.ref('sites').once('value');
+    const data = snap.val() || {};
+    const ids = Object.keys(data);
+    if(ids.length === 0){
+      wrap.innerHTML = '<div class="admin-status">ยังไม่มีงานที่สร้างไว้</div>';
+      status.textContent = '';
+      return;
+    }
+    wrap.innerHTML = '';
+    ids.forEach((id) => {
+      const s = (data[id] && data[id].settings) || {};
+      const link = `${location.origin}${location.pathname}?site=${id}`;
+      const row = document.createElement('div');
+      row.className = 'sites-list-item';
+      row.innerHTML = `
+        <div>
+          <div class="sites-list-name">${s.coupleNames || s.brand || '(ยังไม่ตั้งชื่อ)'}</div>
+          <div class="sites-list-id">${id}</div>
+        </div>
+        <button class="sites-list-copy">คัดลอกลิงก์</button>
+      `;
+      row.querySelector('.sites-list-copy').addEventListener('click', () => {
+        navigator.clipboard?.writeText(link).catch(() => {});
+      });
+      wrap.appendChild(row);
+    });
+    status.textContent = `ทั้งหมด ${ids.length} งาน`;
+  }catch(err){
+    status.textContent = 'โหลดรายชื่อไม่สำเร็จ: ' + (err.message || err);
+  }
+}
+document.getElementById('refreshSitesBtn').addEventListener('click', loadSitesList);
+
+// เปิดหน้าล็อกอินผู้ดูแลระบบให้อัตโนมัติถ้าลิงก์มี ?superadmin=1
+if(isSuperAdminUrl){ openSuperAdminLogin(); }
 
 // ---- boot ----
 showBanner('loading', lang==='th' ? 'กำลังเชื่อมต่อ Google Drive...' : 'Connecting to Google Drive...');
