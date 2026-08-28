@@ -1406,8 +1406,14 @@ function showSuperAdmin(){
   superAdminWrap.classList.add('show');
   loadSitesList();
 }
-document.getElementById('superAdminBackBtn').addEventListener('click', showGuest);
-document.getElementById('superAdminLogoutBtn').addEventListener('click', showGuest);
+// ออกจากหน้าผู้ดูแลระบบ: นำทางกลับไปหน้าแกลเลอรีจริง (ตัด ?superadmin=1 ออก) แทนการสลับ
+// class เฉยๆ เพราะตอนอยู่ในโหมด super admin เราข้ามการโหลดการตั้งค่า/รูปภาพของแกลเลอรีไปเลย
+// การนำทางใหม่ทำให้หน้าเว็บเริ่มโหลดแกลเลอรีให้ถูกต้องตั้งแต่ต้น
+function exitSuperAdmin(){
+  window.location.href = buildShareUrl();
+}
+document.getElementById('superAdminBackBtn').addEventListener('click', exitSuperAdmin);
+document.getElementById('superAdminLogoutBtn').addEventListener('click', exitSuperAdmin);
 
 document.getElementById('createSiteBtn').addEventListener('click', async () => {
   const status = document.getElementById('createSiteStatus');
@@ -1520,15 +1526,22 @@ async function loadSitesList(){
 document.getElementById('refreshSitesBtn').addEventListener('click', loadSitesList);
 
 // เปิดหน้าล็อกอินผู้ดูแลระบบให้อัตโนมัติถ้าลิงก์มี ?superadmin=1
-if(isSuperAdminUrl){ openSuperAdminLogin(); }
-
-// ---- boot ----
-showBanner('loading', lang==='th' ? 'กำลังเชื่อมต่อ Google Drive...' : 'Connecting to Google Drive...');
-(async () => {
-  await loadAllSettings();
-  await refresh();
-})();
-setInterval(refresh, POLL_MS);
+// โหมดนี้จะ "ไม่โหลดแกลเลอรีของงานไหนเลย" (ซ่อนหน้าแขก + ข้ามการดึงรูปจาก Google Drive
+// ทั้งหมด) เพื่อไม่ให้ผู้ดูแลระบบเห็นรูปของงานใดงานหนึ่งปนอยู่โดยไม่ได้ตั้งใจ
+if(isSuperAdminUrl){
+  guestPage.classList.add('hidden');
+  bottomToolbar.style.display = 'none';
+  hideBanner();
+  openSuperAdminLogin();
+} else {
+  // ---- boot ----
+  showBanner('loading', lang==='th' ? 'กำลังเชื่อมต่อ Google Drive...' : 'Connecting to Google Drive...');
+  (async () => {
+    await loadAllSettings();
+    await refresh();
+  })();
+  setInterval(refresh, POLL_MS);
+}
 </script>
 
 </body>
