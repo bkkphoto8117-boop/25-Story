@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Playfair+Display:ital,wght@0,600;1,600&family=Prompt:wght@400;600&family=Mali:wght@500;700&family=Noto+Serif+Thai:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <style>
   :root{
     --bg: #F7F3EC;
@@ -91,6 +93,11 @@
   .event-meta{ font-size:11px; color:var(--ink-soft); }
 
   .view-row{ display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:12px;}
+  .select-all-link{
+    margin-right:auto; font-family:'Noto Serif Thai', serif; font-size:11.5px; font-weight:700;
+    color:var(--accent); cursor:pointer; display:none; user-select:none;
+  }
+  .select-all-link.show{ display:inline-block; }
   .view-label{ font-size:11px; font-weight:700; letter-spacing:0.08em; color:var(--ink-soft);}
   .view-toggle{
     width:34px; height:34px; border-radius:50%; background:var(--accent-soft); border:none;
@@ -254,6 +261,7 @@
     </div>
 
     <div class="view-row">
+      <span class="select-all-link" id="selectAllLink">เลือกทั้งหมด</span>
       <span class="view-label" id="viewLabel">VIEW</span>
       <button class="view-toggle" id="viewToggle" title="สลับความหนาแน่นของกริด">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
@@ -440,10 +448,12 @@ const THEME_PRESETS = [
 const STRINGS = {
   th: { eventSub:'ยินดีกับ', view:'VIEW', qr:'QR Code', download:'ดาวน์โหลด', select:'เลือกรูป', doneSelect:'เสร็จสิ้น', lang:'Language', langBtn:'ไทย', login:'เข้าสู่ระบบ',
         qrTitle:'สแกนเพื่อเปิดแกลเลอรีนี้', qrHint:'แชร์ลิงก์นี้ให้แขกเปิดดูรูปเองได้', scanSave:'SCAN เก็บภาพนี้',
-        photosWord:'ภาพ', updated:'อัปเดตล่าสุด', pickSelectFirst:'เลือกรูปก่อน แล้วค่อยกดดาวน์โหลด' },
+        photosWord:'ภาพ', updated:'อัปเดตล่าสุด', pickSelectFirst:'เลือกรูปก่อน แล้วค่อยกดดาวน์โหลด',
+        selectAll:'เลือกทั้งหมด', deselectAll:'ยกเลิกทั้งหมด', selectedCount:'เลือกแล้ว' },
   en: { eventSub:'Celebrating', view:'VIEW', qr:'QR Code', download:'Download', select:'Select', doneSelect:'Done', lang:'Language', langBtn:'EN', login:'Log in',
         qrTitle:'Scan to open this gallery', qrHint:'Share this link so guests can browse on their own phone', scanSave:'SCAN to save',
-        photosWord:'photos', updated:'Last updated', pickSelectFirst:'Select photos first, then tap download' },
+        photosWord:'photos', updated:'Last updated', pickSelectFirst:'Select photos first, then tap download',
+        selectAll:'Select all', deselectAll:'Deselect all', selectedCount:'selected' },
 };
 
 // ---- DOM refs ----
@@ -463,6 +473,7 @@ const langPillTop = document.getElementById('langPillTop');
 const btnQr = document.getElementById('btnQr');
 const btnDownload = document.getElementById('btnDownload');
 const btnSelect = document.getElementById('btnSelect');
+const selectAllLink = document.getElementById('selectAllLink');
 const btnLang = document.getElementById('btnLang');
 const lblQr = document.getElementById('lblQr');
 const lblDownload = document.getElementById('lblDownload');
@@ -534,7 +545,31 @@ function renderGrid(files){
 function toggleSelect(id, cell){
   if(selectedIds.has(id)){ selectedIds.delete(id); cell.classList.remove('selected'); }
   else { selectedIds.add(id); cell.classList.add('selected'); }
+  updateSelectAllLink();
 }
+
+function updateSelectAllLink(){
+  const t = STRINGS[lang];
+  if(!selectMode || currentFiles.length === 0){ selectAllLink.classList.remove('show'); return; }
+  selectAllLink.classList.add('show');
+  const allSelected = selectedIds.size === currentFiles.length;
+  if(allSelected){
+    selectAllLink.textContent = `${t.deselectAll} (${selectedIds.size})`;
+  } else if(selectedIds.size > 0){
+    selectAllLink.textContent = `${t.selectAll} (${selectedIds.size}/${currentFiles.length})`;
+  } else {
+    selectAllLink.textContent = t.selectAll;
+  }
+}
+
+selectAllLink.addEventListener('click', () => {
+  if(currentFiles.length === 0) return;
+  const allSelected = selectedIds.size === currentFiles.length;
+  if(allSelected){ selectedIds.clear(); }
+  else { currentFiles.forEach(f => selectedIds.add(f.id)); }
+  renderGrid(currentFiles);
+  updateSelectAllLink();
+});
 
 function renderAdminPreview(files){
   const adminGrid = document.getElementById('adminPhotoGrid');
@@ -557,6 +592,7 @@ async function refresh(){
     renderMeta(files);
     renderGrid(files);
     renderAdminPreview(files);
+    updateSelectAllLink();
     hideBanner();
   }catch(err){
     if(err.status === 403){
@@ -610,6 +646,7 @@ btnSelect.addEventListener('click', () => {
   btnSelect.classList.toggle('active-toggle', selectMode);
   lblSelect.textContent = selectMode ? STRINGS[lang].doneSelect : STRINGS[lang].select;
   if(!selectMode){ selectedIds.clear(); renderGrid(currentFiles); }
+  updateSelectAllLink();
 });
 btnDownload.addEventListener('click', () => {
   if(selectedIds.size === 0){
@@ -617,25 +654,27 @@ btnDownload.addEventListener('click', () => {
     setTimeout(hideBanner, 2500);
     return;
   }
-  // Use hidden <a download> clicks instead of window.open — browsers block
-  // multiple window.open() calls from one click as popups, but sequential
-  // anchor clicks are treated as normal downloads and go through fine.
+  // Fire every download synchronously inside this one click handler (no
+  // setTimeout stagger). Browsers only treat downloads as "user initiated"
+  // while still inside the click's call stack — delaying them with
+  // setTimeout loses that, and the browser silently blocks every file
+  // after the first. Triggering them all at once gives every file the best
+  // chance of going through under a single "allow multiple downloads"
+  // permission from the browser.
   const ids = Array.from(selectedIds);
-  ids.forEach((id, i) => {
-    setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = `https://drive.google.com/uc?export=download&id=${id}`;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }, i * 400);
+  ids.forEach((id) => {
+    const a = document.createElement('a');
+    a.href = `https://drive.google.com/uc?export=download&id=${id}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   });
   showBanner('loading', lang === 'th'
-    ? `กำลังดาวน์โหลด ${ids.length} รูป — ถ้าเบราว์เซอร์ถามเรื่องอนุญาตป๊อปอัพ กด "อนุญาต" ได้เลย`
-    : `Downloading ${ids.length} photos — allow pop-ups if your browser asks`);
-  setTimeout(hideBanner, 4000);
+    ? `กำลังดาวน์โหลด ${ids.length} รูป — ถ้าเบราว์เซอร์ขึ้นแจ้งเตือน "อนุญาตดาวน์โหลดหลายไฟล์" ใกล้แถบที่อยู่เว็บด้านบน ให้กด "อนุญาต" (Allow) แล้วกดปุ่มดาวน์โหลดอีกครั้ง`
+    : `Downloading ${ids.length} photos — if your browser shows an "allow multiple downloads" prompt near the address bar, tap Allow, then press download again`);
+  setTimeout(hideBanner, 6000);
 });
 
 // ---- view density ----
@@ -646,7 +685,7 @@ viewToggle.addEventListener('click', () => { dense = !dense; grid.classList.togg
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('dark');
   themeKnob.textContent = document.body.classList.contains('dark') ? '🌙' : '☀️';
-  saveSetting(THEME_MODE_KEY, document.body.classList.contains('dark') ? 'dark' : 'light', false);
+  saveLocalPref('theme-mode', document.body.classList.contains('dark') ? 'dark' : 'light');
 });
 
 // ---- language ----
@@ -664,11 +703,12 @@ function applyLangStrings(){
   document.getElementById('qrModalHint').textContent = t.qrHint;
   renderMeta(currentFiles);
   renderGrid(currentFiles);
+  updateSelectAllLink();
 }
 function toggleLang(){
   lang = lang === 'th' ? 'en' : 'th';
   applyLangStrings();
-  saveSetting(LANG_KEY, lang, false);
+  saveLocalPref('lang', lang);
 }
 langPillTop.addEventListener('click', toggleLang);
 btnLang.addEventListener('click', toggleLang);
@@ -700,11 +740,11 @@ THEME_PRESETS.forEach(t => {
   sw.style.background = t.color;
   sw.dataset.color = t.color;
   sw.title = t.name;
-  sw.addEventListener('click', () => { applyAccent(t.color); saveSetting(ACCENT_KEY, t.color, true); });
+  sw.addEventListener('click', () => { saveSharedSettings({ accentColor: t.color }); });
   swatchRow.insertBefore(sw, swatchRow.lastElementChild);
 });
 document.getElementById('customColorInput').addEventListener('input', (e) => applyAccent(e.target.value));
-document.getElementById('customColorInput').addEventListener('change', (e) => saveSetting(ACCENT_KEY, e.target.value, true));
+document.getElementById('customColorInput').addEventListener('change', (e) => saveSharedSettings({ accentColor: e.target.value }));
 
 // ---- font picker ----
 const fontSelect = document.getElementById('fontSelect');
@@ -727,7 +767,7 @@ document.getElementById('logoFileInput').addEventListener('change', (e) => {
     const dataUrl = reader.result;
     document.getElementById('logoPreview').innerHTML = `<img src="${dataUrl}">`;
     applyLogo(dataUrl);
-    await saveSetting(LOGO_KEY, dataUrl, true);
+    await saveSharedSettings({ logoDataUrl: dataUrl });
   };
   reader.readAsDataURL(file);
 });
@@ -736,36 +776,56 @@ function applyLogo(dataUrl){
 }
 
 // ---- shared/local persisted settings ----
-const BRAND_KEY = 'bws-gallery2:brand-name';
-const EVENT_SUB_KEY = 'bws-gallery2:event-sub';
-const COUPLE_KEY = 'bws-gallery2:couple-names';
-const EVENT_DATE_KEY = 'bws-gallery2:event-date';
-const FOLDER_KEY = 'bws-gallery2:drive-folder-id';
-const THEME_MODE_KEY = 'bws-gallery2:theme-mode';
-const LANG_KEY = 'bws-gallery2:lang';
-const ACCENT_KEY = 'bws-gallery2:accent-color';
-const LOGO_KEY = 'bws-gallery2:logo-data-url';
-const FONT_KEY = 'bws-gallery2:couple-font';
-const PASSWORD_KEY = 'bws-gallery2:admin-password';
-
 let eventSubValue = '';
 let eventDateValue = '';
 
-// บันทึก/โหลดการตั้งค่า — ถ้ามี window.storage (เช่นตอนพรีวิวใน Claude) จะใช้ตัวนั้น
-// ถ้าไม่มี (เช่นตอนโฮสต์จริงบน GitHub Pages) จะใช้ localStorage ของเบราว์เซอร์แทน
-// หมายเหตุ: localStorage บันทึกเฉพาะเบราว์เซอร์เครื่องที่แก้ไขเท่านั้น ไม่ sync ไปหาแขกคนอื่น
-// ถ้าต้องการให้ทุกคนเห็นค่าที่เปลี่ยน ให้ไปแก้ในไฟล์ config.js แล้วอัปโหลดขึ้น GitHub ใหม่
-async function saveSetting(key, value, shared){
-  try{
-    if(window.storage){ await window.storage.set(key, value, shared); }
-    else { localStorage.setItem(key, value); }
-  }catch(err){}
+// ---- ค่าส่วนตัวของเบราว์เซอร์นี้เท่านั้น (ธีมสว่าง/มืด, ภาษา) — เก็บด้วย localStorage เสมอ ----
+function loadLocalPref(key, fallback){
+  try{ const v = localStorage.getItem('bws-gallery2:' + key); return v === null ? fallback : v; }
+  catch(err){ return fallback; }
 }
-async function loadSetting(key, shared){
-  try{
-    if(window.storage){ const r = await window.storage.get(key, shared); return r ? r.value : null; }
-    else { return localStorage.getItem(key); }
-  }catch(err){ return null; }
+function saveLocalPref(key, value){
+  try{ localStorage.setItem('bws-gallery2:' + key, value); }catch(err){}
+}
+
+// ---- ค่ากลางที่ทุกคนเห็นร่วมกัน (ชื่อแบรนด์, ชื่อคู่บ่าวสาว, สี, โลโก้, Folder ID, รหัสผ่าน) ----
+// ถ้าตั้งค่า Firebase ไว้ใน config.js จะ sync กันแบบ real-time ข้ามเครื่อง/เบราว์เซอร์ทันที
+// ถ้ายังไม่ได้ตั้งค่า Firebase จะ fallback ไปเก็บใน localStorage ของเครื่องนั้นแทน (ไม่ sync ข้ามเครื่อง)
+const SETTINGS_PATH = 'settings';
+let db = null;
+let firebaseReady = false;
+let latestSharedSettings = {};
+
+try{
+  if(window.firebase && SITE_CONFIG.firebase && SITE_CONFIG.firebase.databaseURL){
+    firebase.initializeApp(SITE_CONFIG.firebase);
+    db = firebase.database();
+    firebaseReady = true;
+  }
+}catch(err){ console.warn('Firebase init failed, falling back to localStorage only:', err); }
+
+async function saveSharedSettings(patch){
+  latestSharedSettings = Object.assign({}, latestSharedSettings, patch);
+  applySharedSettings(latestSharedSettings);
+  if(firebaseReady){
+    try{ await db.ref(SETTINGS_PATH).update(patch); return; }
+    catch(err){ console.warn('Firebase save failed, falling back to localStorage:', err); }
+  }
+  Object.keys(patch).forEach(k => saveLocalPref(k, patch[k]));
+}
+
+function loadSharedSettingsFallback(){
+  return {
+    brand: loadLocalPref('brand', ''),
+    eventSub: loadLocalPref('eventSub', ''),
+    coupleNames: loadLocalPref('coupleNames', ''),
+    eventDate: loadLocalPref('eventDate', ''),
+    folderId: loadLocalPref('folderId', ''),
+    accentColor: loadLocalPref('accentColor', ''),
+    logoDataUrl: loadLocalPref('logoDataUrl', ''),
+    coupleFont: loadLocalPref('coupleFont', ''),
+    adminPassword: loadLocalPref('adminPassword', ''),
+  };
 }
 
 function parseFolderId(input){
@@ -779,43 +839,61 @@ function parseFolderId(input){
   return null;
 }
 
-async function loadAllSettings(){
-  const [brand, sub, couple, date, folder, theme, savedLang, accent, logo, font] = await Promise.all([
-    loadSetting(BRAND_KEY, true), loadSetting(EVENT_SUB_KEY, true), loadSetting(COUPLE_KEY, true),
-    loadSetting(EVENT_DATE_KEY, true), loadSetting(FOLDER_KEY, true), loadSetting(THEME_MODE_KEY, false),
-    loadSetting(LANG_KEY, false), loadSetting(ACCENT_KEY, true), loadSetting(LOGO_KEY, true), loadSetting(FONT_KEY, true),
-  ]);
+// เรียกทุกครั้งที่มีค่าตั้งค่าใหม่เข้ามา (ทั้งตอนโหลดหน้าครั้งแรก และทุกครั้งที่ Firebase
+// แจ้งว่ามีการเปลี่ยนแปลง ไม่ว่าจะมาจากเบราว์เซอร์เครื่องไหนก็ตาม) เพื่ออัปเดตหน้าจอแบบ real-time
+function applySharedSettings(data){
+  data = data || {};
+  const brand = data.brand || SITE_CONFIG.brandName;
+  const sub = data.eventSub || SITE_CONFIG.eventSub;
+  const couple = data.coupleNames || SITE_CONFIG.coupleNames;
+  const date = data.eventDate || SITE_CONFIG.eventDate;
+  const folder = data.folderId || DEFAULT_FOLDER_ID;
+  const accent = data.accentColor || SITE_CONFIG.accentColor;
+  const logo = data.logoDataUrl || '';
+  const font = data.coupleFont || SITE_CONFIG.coupleFont;
 
-  // ถ้ายังไม่เคยมีใครบันทึกค่าใหม่ ให้ใช้ค่าเริ่มต้นจาก config.js
-  const finalBrand = brand || SITE_CONFIG.brandName;
-  const finalSub = sub || SITE_CONFIG.eventSub;
-  const finalCouple = couple || SITE_CONFIG.coupleNames;
-  const finalDate = date || SITE_CONFIG.eventDate;
-  const finalTheme = theme || SITE_CONFIG.defaultTheme;
-  const finalLang = (savedLang === 'en' || savedLang === 'th') ? savedLang : SITE_CONFIG.defaultLang;
-  const finalAccent = accent || SITE_CONFIG.accentColor;
-  const finalFont = font || SITE_CONFIG.coupleFont;
-
-  if(finalBrand){ brandNameLine.textContent = finalBrand; logoLetter.textContent = finalBrand.trim().charAt(0).toUpperCase(); }
-  eventSubValue = finalSub;
-  if(finalCouple) eventTitle.textContent = finalCouple;
-  eventDateValue = finalDate;
-  FOLDER_ID = folder || DEFAULT_FOLDER_ID;
-  if(finalTheme === 'dark'){ document.body.classList.add('dark'); themeKnob.textContent = '🌙'; }
-  lang = finalLang;
-  applyAccent(finalAccent);
+  if(brand){ brandNameLine.textContent = brand; if(!logo) logoLetter.textContent = brand.trim().charAt(0).toUpperCase(); }
+  eventSubValue = sub;
+  if(couple) eventTitle.textContent = couple;
+  eventDateValue = date;
+  const folderChanged = folder !== FOLDER_ID;
+  FOLDER_ID = folder;
+  applyAccent(accent);
   if(logo) applyLogo(logo);
-  document.documentElement.style.setProperty('--couple-font', finalFont);
+  document.documentElement.style.setProperty('--couple-font', font);
 
-  const ib = document.getElementById('inputBrand'); if(ib) ib.value = finalBrand || '';
-  const isub = document.getElementById('inputEventSub'); if(isub) isub.value = finalSub || '';
-  const icn = document.getElementById('inputCoupleNames'); if(icn) icn.value = finalCouple || '';
-  const ied = document.getElementById('inputEventDate'); if(ied) ied.value = finalDate || '';
-  const fi = document.getElementById('folderInput'); if(fi) fi.value = folder ? `https://drive.google.com/drive/folders/${folder}` : `https://drive.google.com/drive/folders/${DEFAULT_FOLDER_ID}`;
+  const ib = document.getElementById('inputBrand'); if(ib && document.activeElement !== ib) ib.value = brand || '';
+  const isub = document.getElementById('inputEventSub'); if(isub && document.activeElement !== isub) isub.value = sub || '';
+  const icn = document.getElementById('inputCoupleNames'); if(icn && document.activeElement !== icn) icn.value = couple || '';
+  const ied = document.getElementById('inputEventDate'); if(ied && document.activeElement !== ied) ied.value = date || '';
+  const fi = document.getElementById('folderInput'); if(fi && document.activeElement !== fi) fi.value = `https://drive.google.com/drive/folders/${folder}`;
   if(logo) document.getElementById('logoPreview').innerHTML = `<img src="${logo}">`;
-  fontSelect.value = finalFont; fontPreview.style.fontFamily = finalFont;
+  fontSelect.value = font; fontPreview.style.fontFamily = font;
 
   applyLangStrings();
+  if(folderChanged) refresh();
+}
+
+function initSharedSettingsSync(){
+  if(firebaseReady){
+    // .on('value', ...) ยิง callback ทันทีตอน subscribe ด้วยค่าปัจจุบัน แล้วยิงซ้ำอัตโนมัติ
+    // ทุกครั้งที่มีใครก็ตามเขียนค่าใหม่เข้ามา — นี่คือกลไก real-time หลักของทั้งเว็บ
+    db.ref(SETTINGS_PATH).on('value', (snapshot) => {
+      latestSharedSettings = snapshot.val() || {};
+      applySharedSettings(latestSharedSettings);
+    }, (err) => { console.warn('Firebase sync error:', err); });
+  } else {
+    latestSharedSettings = loadSharedSettingsFallback();
+    applySharedSettings(latestSharedSettings);
+  }
+}
+
+async function loadAllSettings(){
+  const theme = loadLocalPref('theme-mode', SITE_CONFIG.defaultTheme);
+  const savedLang = loadLocalPref('lang', SITE_CONFIG.defaultLang);
+  if(theme === 'dark'){ document.body.classList.add('dark'); themeKnob.textContent = '🌙'; }
+  lang = (savedLang === 'en' || savedLang === 'th') ? savedLang : SITE_CONFIG.defaultLang;
+  initSharedSettingsSync();
 }
 
 // ---- admin field save handlers ----
@@ -823,9 +901,8 @@ document.getElementById('saveBrandBtn').addEventListener('click', async () => {
   const brand = document.getElementById('inputBrand').value.trim();
   const status = document.getElementById('brandSaveStatus');
   status.textContent = 'กำลังบันทึก...';
-  await saveSetting(BRAND_KEY, brand, true);
-  if(brand){ brandNameLine.textContent = brand; if(!document.getElementById('logoPreview').querySelector('img')) logoLetter.textContent = brand.charAt(0).toUpperCase(); }
-  status.textContent = 'บันทึกแล้ว ✓';
+  await saveSharedSettings({ brand });
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
 });
 
 document.getElementById('saveEventBtn').addEventListener('click', async () => {
@@ -835,16 +912,8 @@ document.getElementById('saveEventBtn').addEventListener('click', async () => {
   const font = fontSelect.value;
   const status = document.getElementById('eventSaveStatus');
   status.textContent = 'กำลังบันทึก...';
-  await Promise.all([
-    saveSetting(EVENT_SUB_KEY, sub, true),
-    saveSetting(COUPLE_KEY, couple, true),
-    saveSetting(EVENT_DATE_KEY, date, true),
-    saveSetting(FONT_KEY, font, true),
-  ]);
-  if(sub){ eventSubValue = sub; eventSub.textContent = sub; }
-  if(couple) eventTitle.textContent = couple;
-  if(date){ eventDateValue = date; renderMeta(currentFiles); }
-  status.textContent = 'บันทึกแล้ว ✓';
+  await saveSharedSettings({ eventSub: sub, coupleNames: couple, eventDate: date, coupleFont: font });
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
 });
 
 document.getElementById('folderSaveBtn').addEventListener('click', async () => {
@@ -853,10 +922,9 @@ document.getElementById('folderSaveBtn').addEventListener('click', async () => {
   const parsed = parseFolderId(folderInput.value);
   if(!parsed){ status.style.color='var(--err)'; status.textContent='ลิงก์ไม่ถูกต้อง'; return; }
   status.style.color=''; status.textContent='กำลังบันทึก...';
-  await saveSetting(FOLDER_KEY, parsed, true);
-  FOLDER_ID = parsed;
+  await saveSharedSettings({ folderId: parsed });
   await refresh();
-  status.textContent = 'บันทึกแล้ว ✓ โหลดรูปใหม่แล้ว';
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ แขกทุกคนโหลดรูปใหม่แล้ว' : 'บันทึกแล้ว ✓ โหลดรูปใหม่แล้ว (เฉพาะเบราว์เซอร์นี้)';
 });
 
 document.getElementById('savePasswordBtn').addEventListener('click', async () => {
@@ -864,7 +932,7 @@ document.getElementById('savePasswordBtn').addEventListener('click', async () =>
   const status = document.getElementById('passwordSaveStatus');
   if(!val){ status.style.color='var(--err)'; status.textContent='กรอกรหัสผ่านใหม่ก่อน'; return; }
   status.style.color=''; status.textContent='กำลังบันทึก...';
-  await saveSetting(PASSWORD_KEY, val, true);
+  await saveSharedSettings({ adminPassword: val });
   document.getElementById('newPasswordInput').value = '';
   status.textContent = 'เปลี่ยนรหัสผ่านแล้ว ✓';
 });
@@ -888,8 +956,7 @@ function closeLoginModal(){ loginModal.classList.remove('open'); }
 
 document.getElementById('loginSubmitBtn').addEventListener('click', async () => {
   const entered = loginPasswordInput.value;
-  const savedPassword = await loadSetting(PASSWORD_KEY, true);
-  const correctPassword = savedPassword || DEFAULT_PASSWORD;
+  const correctPassword = (latestSharedSettings && latestSharedSettings.adminPassword) || DEFAULT_PASSWORD;
   if(entered === correctPassword){
     closeLoginModal();
     showAdmin();
