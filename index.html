@@ -42,7 +42,9 @@
     min-height:100vh; transition: background-color 0.25s, color 0.25s; padding-bottom:86px;
   }
 
-  .page{ max-width:520px; margin:0 auto; padding:16px 14px 0; }
+  .page{ max-width:1100px; margin:0 auto; padding:16px 14px 0; }
+  @media (min-width:700px){ .page{ padding:24px 24px 0; } }
+  @media (min-width:1100px){ .page{ padding:32px 32px 0; } }
   .page.hidden{ display:none; }
 
   .gallery-card{
@@ -50,26 +52,24 @@
     box-shadow:0 20px 50px -24px rgba(30,26,20,0.28), 0 0 0 1px var(--line);
   }
 
-  .top-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:16px;}
-  .top-row.centered{ flex-direction:column; gap:10px; position:relative; padding-top:2px; }
-  .top-row.centered .brand{ flex-direction:column; text-align:center; gap:8px; }
-  .top-row.centered .logo-circle{ width:60px; height:60px; font-size:26px; }
-  .top-row.centered .brand-name{ white-space:normal; }
-  .top-row.centered .top-actions{ position:absolute; top:0; right:0; }
-  .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
-  .logo-circle{
-    width:38px; height:38px; border-radius:50%; border:1.5px solid var(--accent);
-    display:flex; align-items:center; justify-content:center; overflow:hidden;
-    font-family:'Cormorant Garamond', serif; font-weight:600; font-size:17px; color:var(--accent);
-    flex-shrink:0; background:var(--accent-soft);
+  .hero-wrap{ position:relative; margin-bottom:34px; }
+  .hero-banner{
+    width:100%; aspect-ratio:16/10; border-radius:var(--radius-lg); overflow:hidden; position:relative;
+    background: linear-gradient(150deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 60%, black 20%) 100%);
   }
-  .logo-circle img{ width:100%; height:100%; object-fit:cover; }
-  .brand-text{ line-height:1.15; min-width:0; }
-  .brand-name{
-    font-size:11.5px; font-weight:700; letter-spacing:0.06em; color:var(--ink);
-    text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  .hero-banner img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .hero-placeholder{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:rgba(255,255,255,0.85); font-family:'Noto Serif Thai', serif; font-size:12px; text-align:center; padding:0 20px;
   }
-  .top-actions{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .hero-actions{ position:absolute; top:12px; right:12px; display:flex; align-items:center; gap:6px; z-index:5; }
+  .logo-badge{
+    position:absolute; left:18px; bottom:-24px; width:60px; height:60px; border-radius:50%;
+    background:var(--card); border:3px solid var(--card); box-shadow:0 8px 20px rgba(20,18,15,0.22);
+    display:flex; align-items:center; justify-content:center; overflow:hidden; z-index:6;
+    font-family:'Cormorant Garamond', serif; font-weight:600; font-size:20px; color:var(--accent);
+  }
+  .logo-badge img{ width:100%; height:100%; object-fit:cover; }
   .toggle-pill{
     width:38px; height:24px; border-radius:999px; background:var(--accent-soft); border:1px solid var(--line);
     position:relative; cursor:pointer; flex-shrink:0;
@@ -119,8 +119,8 @@
   .status-banner.error{ background:#FBEAE7; color:var(--err); }
   .status-banner.loading{ background:var(--accent-soft); color:var(--ink-soft); }
 
-  .grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
-  .grid.dense{ grid-template-columns:repeat(4, 1fr); }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px; }
+  .grid.dense{ grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); }
   .cell{ position:relative; aspect-ratio:3/4; border-radius:var(--radius-md); overflow:hidden; background:var(--accent-soft); cursor:pointer; }
   .cell img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.2s;}
   .cell:hover img{ transform:scale(1.05); }
@@ -272,8 +272,9 @@
 
   .font-preview{ font-size:20px; margin-top:6px; color:var(--ink); }
 
-  .admin-photo-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  .admin-photo-cell{ aspect-ratio:1/1; border-radius:var(--radius-sm); overflow:hidden; background:var(--accent-soft);}
+  .admin-photo-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-height:340px; overflow-y:auto; padding-right:2px; }
+  .admin-photo-cell{ aspect-ratio:1/1; border-radius:var(--radius-sm); overflow:hidden; background:var(--accent-soft); cursor:pointer; border:2px solid transparent;}
+  .admin-photo-cell.selected{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft);}
   .admin-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block;}
 </style>
 </head>
@@ -283,14 +284,12 @@
 <div class="page" id="guestPage">
   <div class="gallery-card">
 
-    <div class="top-row">
-      <div class="brand">
-        <div class="logo-circle" id="logoCircle"><span id="logoLetter">B</span></div>
-        <div class="brand-text">
-          <div class="brand-name" id="brandNameLine">Bangkok Wedding Studio</div>
-        </div>
+    <div class="hero-wrap">
+      <div class="hero-banner" id="heroBanner">
+        <div class="hero-placeholder" id="heroPlaceholder">ยังไม่ได้เลือกภาพหน้าปก</div>
+        <img id="heroImg" style="display:none;" alt="">
       </div>
-      <div class="top-actions">
+      <div class="hero-actions">
         <button class="toggle-pill" id="themeToggle" title="สลับโหมดสว่าง/มืด"><span class="knob" id="themeKnob">☀️</span></button>
         <button class="lang-pill" id="langPillTop">ไทย</button>
         <button class="login-btn" id="loginOpenBtn">
@@ -298,6 +297,7 @@
           <span id="loginBtnLabel">เข้าสู่ระบบ</span>
         </button>
       </div>
+      <div class="logo-badge" id="logoCircle"><span id="logoLetter">B</span></div>
     </div>
 
     <div class="event-block">
@@ -496,16 +496,15 @@
   </div>
 
   <div class="admin-card">
-    <h2>ตำแหน่งโลโก้ &amp; ชื่อ</h2>
-    <div class="admin-field">
-      <select id="headerLayoutSelect">
-        <option value="row">แถบบน: โลโก้ซ้าย ปุ่มขวา (ค่าเริ่มต้น)</option>
-        <option value="centered">กึ่งกลาง: โลโก้ &amp; ชื่ออยู่กลางด้านบน</option>
-      </select>
+    <h2>รูปในอัลบั้ม / เลือกภาพหน้าปก</h2>
+    <div class="admin-field" style="margin-bottom:10px;">
+      <label>เลื่อนดูรูปทั้งหมดในอัลบั้ม แล้วแตะรูปที่ต้องการเพื่อเลือกเป็นภาพหน้าปก (ด้านบนสุดของหน้าแกลเลอรี)</label>
     </div>
-    <div class="admin-save-row">
-      <button class="admin-btn" id="saveHeaderLayoutBtn">บันทึก</button>
-      <span class="admin-status" id="headerLayoutSaveStatus"></span>
+    <div class="admin-photo-grid" id="adminPhotoGrid"></div>
+    <div class="admin-save-row" style="margin-top:12px;">
+      <button class="admin-btn" id="saveCoverBtn">บันทึกภาพหน้าปก</button>
+      <button class="admin-btn" id="coverResetBtn" style="background:var(--err);">รีเซ็ต</button>
+      <span class="admin-status" id="coverSaveStatus"></span>
     </div>
   </div>
 
@@ -529,11 +528,6 @@
       <button class="admin-btn" id="savePasswordBtn">บันทึก</button>
       <span class="admin-status" id="passwordSaveStatus"></span>
     </div>
-  </div>
-
-  <div class="admin-card">
-    <h2>รูปทั้งหมดในอัลบั้ม (พรีวิว)</h2>
-    <div class="admin-photo-grid" id="adminPhotoGrid"></div>
   </div>
 </div>
 
@@ -640,7 +634,6 @@ const statusBanner = document.getElementById('statusBanner');
 const eventTitle = document.getElementById('eventTitle');
 const eventSub = document.getElementById('eventSub');
 const eventMeta = document.getElementById('eventMeta');
-const brandNameLine = document.getElementById('brandNameLine');
 const logoLetter = document.getElementById('logoLetter');
 const logoCircle = document.getElementById('logoCircle');
 const viewToggle = document.getElementById('viewToggle');
@@ -759,13 +752,20 @@ selectAllLink.addEventListener('click', () => {
 function renderAdminPreview(files){
   const adminGrid = document.getElementById('adminPhotoGrid');
   adminGrid.innerHTML = '';
-  files.slice(0, 16).forEach(f => {
+  files.forEach(f => {
     const cell = document.createElement('div');
-    cell.className = 'admin-photo-cell';
+    cell.className = 'admin-photo-cell' + (f.id === heroFileId ? ' selected' : '');
+    cell.dataset.id = f.id;
     const img = document.createElement('img');
     img.src = thumbUrl(f.id, 200);
     img.loading = 'lazy';
     cell.appendChild(img);
+    cell.addEventListener('click', () => {
+      heroFileId = f.id;
+      document.querySelectorAll('.admin-photo-cell').forEach(c => c.classList.remove('selected'));
+      cell.classList.add('selected');
+      document.getElementById('coverSaveStatus').textContent = '';
+    });
     adminGrid.appendChild(cell);
   });
 }
@@ -1093,20 +1093,35 @@ document.getElementById('saveCornerBtn').addEventListener('click', async () => {
   status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
 });
 
-// ---- ตำแหน่งโลโก้ & ชื่อ ----
-function applyHeaderLayout(layout){
-  const topRow = document.querySelector('.top-row');
-  if(topRow) topRow.classList.toggle('centered', layout === 'centered');
-  const sel = document.getElementById('headerLayoutSelect');
-  if(sel && document.activeElement !== sel) sel.value = layout || 'row';
+// ---- ภาพหน้าปก (hero banner) ----
+let heroFileId = null;
+function renderHero(){
+  const heroImg = document.getElementById('heroImg');
+  const heroPlaceholder = document.getElementById('heroPlaceholder');
+  if(heroFileId){
+    heroImg.src = thumbUrl(heroFileId, 1000);
+    heroImg.style.display = 'block';
+    heroPlaceholder.style.display = 'none';
+  } else {
+    heroImg.style.display = 'none';
+    heroPlaceholder.style.display = 'flex';
+  }
 }
-document.getElementById('headerLayoutSelect').addEventListener('change', (e) => applyHeaderLayout(e.target.value));
-document.getElementById('saveHeaderLayoutBtn').addEventListener('click', async () => {
-  const status = document.getElementById('headerLayoutSaveStatus');
-  const layout = document.getElementById('headerLayoutSelect').value;
+document.getElementById('saveCoverBtn').addEventListener('click', async () => {
+  const status = document.getElementById('coverSaveStatus');
   status.textContent = 'กำลังบันทึก...';
-  await saveSharedSettings({ headerLayout: layout });
+  await saveSharedSettings({ coverPhotoId: heroFileId || '' });
+  renderHero();
   status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
+});
+document.getElementById('coverResetBtn').addEventListener('click', async () => {
+  const status = document.getElementById('coverSaveStatus');
+  status.textContent = 'กำลังรีเซ็ต...';
+  heroFileId = null;
+  await saveSharedSettings({ coverPhotoId: '' });
+  renderHero();
+  renderAdminPreview(currentFiles);
+  status.textContent = 'รีเซ็ตแล้ว ✓';
 });
 
 // ---- font picker ----
@@ -1198,6 +1213,11 @@ function loadSharedSettingsFallback(){
     logoDataUrl: loadLocalPref('logoDataUrl', ''),
     coupleFont: loadLocalPref('coupleFont', ''),
     adminPassword: loadLocalPref('adminPassword', ''),
+    bgColor: loadLocalPref('bgColor', ''),
+    bgStyle: loadLocalPref('bgStyle', ''),
+    bgImageDataUrl: loadLocalPref('bgImageDataUrl', ''),
+    cornerStyle: loadLocalPref('cornerStyle', ''),
+    coverPhotoId: loadLocalPref('coverPhotoId', ''),
   };
 }
 
@@ -1232,9 +1252,9 @@ function applySharedSettings(data){
   const bgStyle = data.bgStyle || 'solid';
   const bgImage = data.bgImageDataUrl || '';
   const cornerStyle = data.cornerStyle || 'soft';
-  const headerLayout = data.headerLayout || 'row';
+  const coverPhotoId = data.coverPhotoId || '';
 
-  if(brand){ brandNameLine.textContent = brand; if(!logo) logoLetter.textContent = brand.trim().charAt(0).toUpperCase(); }
+  if(brand && !logo){ logoLetter.textContent = brand.trim().charAt(0).toUpperCase(); }
   eventSubValue = sub;
   if(couple) eventTitle.textContent = couple;
   eventDateValue = date;
@@ -1245,7 +1265,8 @@ function applySharedSettings(data){
   document.documentElement.style.setProperty('--couple-font', font);
   applyBackgroundVisual(bgColor, bgStyle, bgImage);
   applyCornerStyle(cornerStyle);
-  applyHeaderLayout(headerLayout);
+  heroFileId = coverPhotoId || null;
+  renderHero();
 
   const ib = document.getElementById('inputBrand'); if(ib && document.activeElement !== ib) ib.value = brand || '';
   const isub = document.getElementById('inputEventSub'); if(isub && document.activeElement !== isub) isub.value = sub || '';
