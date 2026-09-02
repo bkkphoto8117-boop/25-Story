@@ -515,6 +515,7 @@
     </div>
     <div class="admin-save-row">
       <button class="admin-btn" id="folderSaveBtn">บันทึก</button>
+      <button class="admin-btn" id="folderResetBtn" style="background:var(--err);">รีเซ็ต</button>
       <span class="admin-status" id="folderStatus"></span>
     </div>
   </div>
@@ -1251,8 +1252,12 @@ function applySharedSettings(data){
   const couple = hasCoupleField ? data.coupleNames : SITE_CONFIG.coupleNames;
   const hasDateField = Object.prototype.hasOwnProperty.call(data, 'eventDate');
   const date = hasDateField ? data.eventDate : SITE_CONFIG.eventDate;
-  const hasFolderField = Object.prototype.hasOwnProperty.call(data, 'folderId');
-  const folder = hasFolderField ? data.folderId : DEFAULT_FOLDER_ID;
+  // folderId ไม่ fallback ไปที่ DEFAULT_FOLDER_ID (จาก config.js) เหมือนฟิลด์อื่นๆ ด้านบน
+  // เพราะฟิลด์อื่น (brand/couple/date) เป็นแค่ข้อความเดโม แสดงผิดก็ไม่มีผลเสีย แต่ folderId คือ
+  // ลิงก์ไปยังรูปจริงของลูกค้าคนหนึ่ง ถ้างานไหนยังไม่เคยบันทึกค่าของตัวเองใน Firebase เลย (เช่น
+  // งานที่เพิ่งสร้างใหม่ หรือ Firebase node ที่ยังไม่เคยกดบันทึกจากแอดมิน) ต้องถือว่า "ยังไม่มี
+  // อัลบั้ม" ไปก่อนเสมอ ไม่ใช่หยิบโฟลเดอร์เก่า/เดโมจาก config.js มาโชว์ให้แขกเห็นแทนแบบเงียบๆ
+  const folder = data.folderId || '';
   const accent = data.accentColor || SITE_CONFIG.accentColor;
   const logo = data.logoDataUrl || '';
   const font = data.coupleFont || SITE_CONFIG.coupleFont;
@@ -1298,18 +1303,29 @@ function applySharedSettings(data){
   if(folderChanged) refresh();
 }
 
+// คืนค่าเป็น Promise ที่ resolve ก็ต่อเมื่อได้ค่าตั้งค่าจริงชุดแรกจาก Firebase มาแล้ว (ไม่ใช่แค่
+// ลงทะเบียน listener เสร็จ) เดิม .on('value', ...) เป็น async แล้วคืนการควบคุมทันทีโดยไม่รอข้อมูล
+// จริงกลับมาก่อน ทำให้ตอน boot ไล่ไปเรียก refresh() ต่อได้ทั้งที่ FOLDER_ID ยังเป็นค่าดีฟอลต์จาก
+// config.js (โฟลเดอร์เก่า/ดีฟอลต์) อยู่ เลยเห็นรูปเก่าโผล่มาก่อนค่อยสลับเป็นรูปจริงของงานนี้ทีหลัง
 function initSharedSettingsSync(){
-  if(firebaseReady){
-    // .on('value', ...) ยิง callback ทันทีตอน subscribe ด้วยค่าปัจจุบัน แล้วยิงซ้ำอัตโนมัติ
-    // ทุกครั้งที่มีใครก็ตามเขียนค่าใหม่เข้ามา — นี่คือกลไก real-time หลักของทั้งเว็บ
-    db.ref(SETTINGS_PATH).on('value', (snapshot) => {
-      latestSharedSettings = snapshot.val() || {};
+  return new Promise((resolve) => {
+    if(firebaseReady){
+      // .on('value', ...) ยิง callback ทันทีตอน subscribe ด้วยค่าปัจจุบัน แล้วยิงซ้ำอัตโนมัติ
+      // ทุกครั้งที่มีใครก็ตามเขียนค่าใหม่เข้ามา — นี่คือกลไก real-time หลักของทั้งเว็บ
+      let resolved = false;
+      const finish = () => { if(!resolved){ resolved = true; resolve(); } };
+      db.ref(SETTINGS_PATH).on('value', (snapshot) => {
+        latestSharedSettings = snapshot.val() || {};
+        applySharedSettings(latestSharedSettings);
+        finish();
+      }, (err) => { console.warn('Firebase sync error:', err); finish(); });
+      setTimeout(finish, 4000); // กันหน้าเว็บค้างถ้า Firebase ไม่ตอบสนองเลย
+    } else {
+      latestSharedSettings = loadSharedSettingsFallback();
       applySharedSettings(latestSharedSettings);
-    }, (err) => { console.warn('Firebase sync error:', err); });
-  } else {
-    latestSharedSettings = loadSharedSettingsFallback();
-    applySharedSettings(latestSharedSettings);
-  }
+      resolve();
+    }
+  });
 }
 
 async function loadAllSettings(){
@@ -1317,7 +1333,7 @@ async function loadAllSettings(){
   const savedLang = loadLocalPref('lang', SITE_CONFIG.defaultLang);
   if(theme === 'dark'){ document.body.classList.add('dark'); themeKnob.textContent = '🌙'; }
   lang = (savedLang === 'en' || savedLang === 'th') ? savedLang : SITE_CONFIG.defaultLang;
-  initSharedSettingsSync();
+  await initSharedSettingsSync();
 }
 
 // ---- admin field save handlers ----
@@ -1343,12 +1359,30 @@ document.getElementById('saveEventBtn').addEventListener('click', async () => {
 document.getElementById('folderSaveBtn').addEventListener('click', async () => {
   const folderInput = document.getElementById('folderInput');
   const status = document.getElementById('folderStatus');
-  const parsed = parseFolderId(folderInput.value);
+  const raw = folderInput.value.trim();
+  if(!raw){
+    // เคลียร์ช่องว่างแล้วกดบันทึก = ตั้งใจรีเซ็ตลิงก์ออก เดิมโค้ดจุดนี้จะส่ง parseFolderId('')
+    // ซึ่งคืนค่า null เหมือนลิงก์พัง เลยโดนบล็อกด้วย "ลิงก์ไม่ถูกต้อง" ทำให้รีเซ็ตไม่ได้เลย
+    status.style.color=''; status.textContent='กำลังรีเซ็ต...';
+    await saveSharedSettings({ folderId: '' });
+    await refresh();
+    status.textContent = 'รีเซ็ตแล้ว ✓ ยังไม่มีอัลบั้ม Google Drive';
+    return;
+  }
+  const parsed = parseFolderId(raw);
   if(!parsed){ status.style.color='var(--err)'; status.textContent='ลิงก์ไม่ถูกต้อง'; return; }
   status.style.color=''; status.textContent='กำลังบันทึก...';
   await saveSharedSettings({ folderId: parsed });
   await refresh();
   status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ แขกทุกคนโหลดรูปใหม่แล้ว' : 'บันทึกแล้ว ✓ โหลดรูปใหม่แล้ว (เฉพาะเบราว์เซอร์นี้)';
+});
+document.getElementById('folderResetBtn').addEventListener('click', async () => {
+  const status = document.getElementById('folderStatus');
+  status.style.color=''; status.textContent='กำลังรีเซ็ต...';
+  document.getElementById('folderInput').value = '';
+  await saveSharedSettings({ folderId: '' });
+  await refresh();
+  status.textContent = 'รีเซ็ตแล้ว ✓ ยังไม่มีอัลบั้ม Google Drive';
 });
 
 document.getElementById('savePasswordBtn').addEventListener('click', async () => {
