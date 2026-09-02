@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Playfair+Display:ital,wght@0,600;1,600&family=Prompt:wght@400;600&family=Mali:wght@500;700&family=Noto+Serif+Thai:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <style>
   :root{
     --bg: #F7F3EC;
@@ -19,6 +22,9 @@
     --chip-bg: rgba(30,26,20,0.72);
     --err: #A6483B;
     --couple-font: 'Cormorant Garamond', serif;
+    --radius-lg: 26px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
   }
   body.dark{
     --bg: #171512;
@@ -31,8 +37,9 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
-    background:var(--bg); font-family:'Inter', sans-serif; color:var(--ink);
-    min-height:100vh; transition: background 0.25s, color 0.25s; padding-bottom:86px;
+    background:var(--bg); background-size:cover; background-position:center; background-attachment:fixed;
+    font-family:'Inter', sans-serif; color:var(--ink);
+    min-height:100vh; transition: background-color 0.25s, color 0.25s; padding-bottom:86px;
   }
 
   .page{ max-width:1100px; margin:0 auto; padding:16px 14px 0; }
@@ -41,13 +48,13 @@
   .page.hidden{ display:none; }
 
   .gallery-card{
-    background:var(--card); border-radius:26px; padding:20px 18px 18px;
+    background:var(--card); border-radius:var(--radius-lg); padding:20px 18px 18px;
     box-shadow:0 20px 50px -24px rgba(30,26,20,0.28), 0 0 0 1px var(--line);
   }
 
   .hero-wrap{ position:relative; margin-bottom:34px; }
   .hero-banner{
-    width:100%; aspect-ratio:16/10; border-radius:20px; overflow:hidden; position:relative;
+    width:100%; aspect-ratio:16/10; border-radius:var(--radius-lg); overflow:hidden; position:relative;
     background: linear-gradient(150deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 60%, black 20%) 100%);
   }
   .hero-banner img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -86,7 +93,7 @@
   }
   .login-btn svg{ width:12px; height:12px; }
 
-  .event-block{ text-align:center; padding:6px 4px 18px; border-bottom:1px solid var(--line); margin-bottom:14px; margin-top:4px;}
+  .event-block{ text-align:center; padding:6px 4px 18px; border-bottom:1px solid var(--line); margin-bottom:14px;}
   .event-sub{ font-family:'Noto Serif Thai', serif; font-size:11.5px; color:var(--ink-soft); margin-bottom:4px;}
   .event-title{
     font-family:var(--couple-font); font-weight:600; font-style:italic;
@@ -95,6 +102,11 @@
   .event-meta{ font-size:11px; color:var(--ink-soft); }
 
   .view-row{ display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:12px;}
+  .select-all-link{
+    margin-right:auto; font-family:'Noto Serif Thai', serif; font-size:11.5px; font-weight:700;
+    color:var(--accent); cursor:pointer; display:none; user-select:none;
+  }
+  .select-all-link.show{ display:inline-block; }
   .view-label{ font-size:11px; font-weight:700; letter-spacing:0.08em; color:var(--ink-soft);}
   .view-toggle{
     width:34px; height:34px; border-radius:50%; background:var(--accent-soft); border:none;
@@ -109,7 +121,7 @@
 
   .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px; }
   .grid.dense{ grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); }
-  .cell{ position:relative; aspect-ratio:3/4; border-radius:14px; overflow:hidden; background:var(--accent-soft); cursor:pointer; }
+  .cell{ position:relative; aspect-ratio:3/4; border-radius:var(--radius-md); overflow:hidden; background:var(--accent-soft); cursor:pointer; }
   .cell img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.2s;}
   .cell:hover img{ transform:scale(1.05); }
   .cell .badge{
@@ -127,7 +139,7 @@
 
   .bottom-toolbar{
     position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-    width:min(94vw, 480px); background:var(--card); border-radius:20px;
+    width:min(94vw, 480px); background:var(--card); border-radius:var(--radius-lg);
     box-shadow:0 20px 40px -18px rgba(30,26,20,0.35), 0 0 0 1px var(--line);
     display:flex; padding:10px 4px; z-index:50;
   }
@@ -144,7 +156,7 @@
     display:none; align-items:center; justify-content:center; padding:24px;
   }
   .modal-overlay.open{ display:flex; }
-  .modal-box{ background:var(--card); border-radius:18px; padding:22px; text-align:center; max-width:320px; width:100%; position:relative;}
+  .modal-box{ background:var(--card); border-radius:var(--radius-lg); padding:22px; text-align:center; max-width:320px; width:100%; position:relative;}
   .modal-close{
     position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%;
     background:var(--accent-soft); border:none; cursor:pointer; color:var(--ink);
@@ -171,9 +183,18 @@
 
   .lightbox{ position:fixed; inset:0; background:rgba(15,14,12,0.94); z-index:220; display:none; align-items:center; justify-content:center; padding:20px;}
   .lightbox.open{ display:flex; }
-  .lightbox-frame{ position:relative; max-width:min(92vw,560px); max-height:86vh; background:#000; border-radius:14px; overflow:hidden;}
+  .lightbox-frame{ position:relative; max-width:min(92vw,560px); max-height:86vh; background:#000; border-radius:var(--radius-md); overflow:hidden;}
   .lightbox-frame img{ display:block; max-width:100%; max-height:86vh; object-fit:contain; }
   .lightbox-close{ position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.55); color:#fff; border:none; font-size:16px; cursor:pointer; }
+  .lightbox-nav{
+    position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%;
+    background:rgba(0,0,0,0.45); color:#fff; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; z-index:5;
+  }
+  .lightbox-nav svg{ width:20px; height:20px; }
+  .lightbox-nav-prev{ left:12px; }
+  .lightbox-nav-next{ right:12px; }
+  @media (hover:hover){ .lightbox-nav:hover{ background:rgba(0,0,0,0.65); } }
   .lightbox-qr{ position:absolute; bottom:12px; right:12px; background:#fff; border-radius:10px; padding:7px; display:flex; flex-direction:column; align-items:center; gap:3px; box-shadow:0 6px 18px rgba(0,0,0,0.35);}
   .lightbox-qr .qr-box{ width:70px; height:70px; }
   .lightbox-qr .qr-label{ font-family:'Noto Serif Thai', serif; font-size:8px; font-weight:600; color:#2B2823; white-space:nowrap;}
@@ -186,7 +207,7 @@
     font-family:'Noto Serif Thai', serif; font-size:11.5px; font-weight:600; background:none; border:none;
     color:var(--ink-soft); cursor:pointer; text-decoration:underline;
   }
-  .admin-card{ background:var(--card); border-radius:20px; padding:20px; box-shadow:0 20px 50px -24px rgba(30,26,20,0.28), 0 0 0 1px var(--line); margin-bottom:16px;}
+  .admin-card{ background:var(--card); border-radius:var(--radius-lg); padding:20px; box-shadow:0 20px 50px -24px rgba(30,26,20,0.28), 0 0 0 1px var(--line); margin-bottom:16px;}
   .admin-card h2{ font-family:'Noto Serif Thai', serif; font-size:14px; margin-bottom:12px; color:var(--ink);}
   .admin-field{ margin-bottom:12px; }
   .admin-field label{ display:block; font-size:10.5px; color:var(--ink-soft); margin-bottom:5px; font-family:'Noto Serif Thai', serif;}
@@ -201,6 +222,34 @@
     background:var(--ink); color:var(--card); border:none; padding:9px 18px; border-radius:999px; cursor:pointer;
   }
   .admin-status{ font-size:10.5px; color:var(--ink-soft); }
+
+  .new-site-result{
+    margin-top:14px; padding:12px; border-radius:10px; background:var(--bg); border:1px solid var(--line);
+  }
+  .new-site-result-label{ font-size:11px; color:var(--ink-soft); margin-bottom:8px; }
+  .new-site-link-row{ display:flex; gap:8px; }
+  .new-site-link-row input{
+    flex:1; font-size:11.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink);
+  }
+  .sites-list-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 0; border-bottom:1px solid var(--line); font-size:12px;
+  }
+  .sites-list-item:last-child{ border-bottom:none; }
+  .sites-list-name{ font-weight:600; }
+  .sites-list-id{ font-size:10.5px; color:var(--ink-soft); }
+  .sites-list-copy{
+    font-family:'Noto Serif Thai', serif; font-size:11px; font-weight:600;
+    background:none; color:var(--accent); border:1px solid var(--accent); padding:5px 12px;
+    border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
+  .sites-list-actions{ display:flex; gap:8px; flex-shrink:0; }
+  .sites-list-delete{
+    font-family:'Noto Serif Thai', serif; font-size:11px; font-weight:600;
+    background:none; color:var(--err); border:1px solid var(--err); padding:5px 12px;
+    border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
 
   .logo-upload-row{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
   .logo-preview{
@@ -223,8 +272,8 @@
 
   .font-preview{ font-size:20px; margin-top:6px; color:var(--ink); }
 
-  .admin-photo-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-height:340px; overflow-y:auto; padding-right:2px; }
-  .admin-photo-cell{ aspect-ratio:1/1; border-radius:8px; overflow:hidden; background:var(--accent-soft); cursor:pointer; border:2px solid transparent;}
+  .admin-photo-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .admin-photo-cell{ aspect-ratio:1/1; border-radius:var(--radius-sm); overflow:hidden; background:var(--accent-soft); cursor:pointer; border:2px solid transparent;}
   .admin-photo-cell.selected{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft);}
   .admin-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block;}
 </style>
@@ -258,6 +307,7 @@
     </div>
 
     <div class="view-row">
+      <span class="select-all-link" id="selectAllLink">เลือกทั้งหมด</span>
       <span class="view-label" id="viewLabel">VIEW</span>
       <button class="view-toggle" id="viewToggle" title="สลับความหนาแน่นของกริด">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
@@ -324,6 +374,12 @@
       <div class="qr-label" id="lightboxQrLabel">SCAN เก็บภาพนี้</div>
     </div>
   </div>
+  <button class="lightbox-nav lightbox-nav-prev" id="lightboxPrev" aria-label="Previous">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button class="lightbox-nav lightbox-nav-next" id="lightboxNext" aria-label="Next">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
 </div>
 
 <!-- ================= ADMIN PANEL ================= -->
@@ -384,49 +440,58 @@
   </div>
 
   <div class="admin-card">
-    <h2>โทนสี UI</h2>
-    <div class="admin-field" style="margin-bottom:6px;">
-      <label>สีหลัก (ปุ่ม, ไอคอน, ป้ายกำกับ)</label>
-    </div>
+    <h2>สีหลัก (Accent)</h2>
     <div class="swatch-row" id="swatchRow">
       <label class="swatch-custom" title="กำหนดสีเอง">
         <input type="color" id="customColorInput" value="#A9814B">
       </label>
     </div>
-    <div class="admin-field" style="margin-bottom:6px;">
+  </div>
+
+  <div class="admin-card">
+    <h2>พื้นหลังหน้าเว็บ</h2>
+    <div class="admin-field">
       <label>สีพื้นหลัง</label>
+      <div class="swatch-row" id="bgSwatchRow">
+        <label class="swatch-custom" title="กำหนดสีเอง">
+          <input type="color" id="customBgColorInput" value="#F7F3EC">
+        </label>
+      </div>
     </div>
-    <div class="swatch-row" id="bgSwatchRow">
-      <label class="swatch-custom" title="กำหนดสีเอง">
-        <input type="color" id="customBgInput" value="#F7F3EC">
+    <div class="admin-field">
+      <label>รูปแบบพื้นหลัง</label>
+      <select id="bgStyleSelect">
+        <option value="solid">สีพื้นเรียบ</option>
+        <option value="gradient">ไล่เฉดสี (พื้นหลัง → สีหลัก)</option>
+        <option value="image">รูปพื้นหลังกำหนดเอง</option>
+      </select>
+    </div>
+    <div class="admin-field" id="bgImageUploadWrap" style="display:none;">
+      <label>อัปโหลดรูปพื้นหลัง (ไม่เกิน 2MB)</label>
+      <label class="logo-upload-btn">
+        เลือกรูปพื้นหลัง
+        <input type="file" id="bgImageFileInput" accept="image/*" style="display:none;">
       </label>
     </div>
     <div class="admin-save-row">
-      <button class="admin-btn" id="saveColorsBtn">บันทึก</button>
-      <span class="admin-status" id="colorsSaveStatus"></span>
+      <button class="admin-btn" id="saveBgBtn">บันทึก</button>
+      <span class="admin-status" id="bgSaveStatus"></span>
     </div>
   </div>
 
   <div class="admin-card">
-    <h2>อัลบั้ม Google Drive</h2>
+    <h2>รูปแบบขอบมุม</h2>
     <div class="admin-field">
-      <input type="text" id="folderInput" placeholder="วางลิงก์โฟลเดอร์ Google Drive ที่นี่">
+      <select id="cornerStyleSelect">
+        <option value="square">เหลี่ยม</option>
+        <option value="soft">มน (ค่าเริ่มต้น)</option>
+        <option value="round">มนมาก</option>
+        <option value="pill">มนสุด (แคปซูล)</option>
+      </select>
     </div>
     <div class="admin-save-row">
-      <button class="admin-btn" id="folderSaveBtn">บันทึก</button>
-      <button class="admin-btn" id="folderResetBtn" style="background:var(--err);">รีเซ็ต</button>
-      <span class="admin-status" id="folderStatus"></span>
-    </div>
-  </div>
-
-  <div class="admin-card">
-    <h2>เปลี่ยนรหัสผ่านหลังบ้าน</h2>
-    <div class="admin-field">
-      <input type="text" id="newPasswordInput" placeholder="ตั้งรหัสผ่านใหม่">
-    </div>
-    <div class="admin-save-row">
-      <button class="admin-btn" id="savePasswordBtn">บันทึก</button>
-      <span class="admin-status" id="passwordSaveStatus"></span>
+      <button class="admin-btn" id="saveCornerBtn">บันทึก</button>
+      <span class="admin-status" id="cornerSaveStatus"></span>
     </div>
   </div>
 
@@ -442,15 +507,103 @@
       <span class="admin-status" id="coverSaveStatus"></span>
     </div>
   </div>
+
+  <div class="admin-card">
+    <h2>อัลบั้ม Google Drive</h2>
+    <div class="admin-field">
+      <input type="text" id="folderInput" placeholder="วางลิงก์โฟลเดอร์ Google Drive ที่นี่">
+    </div>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="folderSaveBtn">บันทึก</button>
+      <span class="admin-status" id="folderStatus"></span>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>เปลี่ยนรหัสผ่านหลังบ้าน</h2>
+    <div class="admin-field">
+      <input type="text" id="newPasswordInput" placeholder="ตั้งรหัสผ่านใหม่">
+    </div>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="savePasswordBtn">บันทึก</button>
+      <span class="admin-status" id="passwordSaveStatus"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SUPER ADMIN PANEL (สร้างงานใหม่) ================= -->
+<div class="modal-overlay" id="superAdminLoginModal">
+  <div class="modal-box">
+    <button class="modal-close" id="superAdminLoginClose">✕</button>
+    <h3>ผู้ดูแลระบบ (Super Admin)</h3>
+    <div class="login-field">
+      <label>รหัสผ่านผู้ดูแลระบบ</label>
+      <input type="password" id="superAdminPasswordInput" placeholder="กรอกรหัสผ่านผู้ดูแลระบบ">
+    </div>
+    <button class="login-submit" id="superAdminSubmitBtn">เข้าสู่ระบบ</button>
+    <div class="login-error" id="superAdminLoginError">รหัสผ่านไม่ถูกต้อง ลองอีกครั้ง</div>
+  </div>
+</div>
+
+<div class="admin-wrap" id="superAdminWrap">
+  <div class="admin-top-bar">
+    <button id="superAdminBackBtn">← กลับไปหน้าแกลเลอรี</button>
+    <button id="superAdminLogoutBtn">ออกจากระบบ</button>
+  </div>
+
+  <div class="admin-card">
+    <h2>สร้างงานใหม่</h2>
+    <div class="admin-field">
+      <label>รหัสงาน (ใช้ในลิงก์ ห้ามซ้ำ เช่น mind-aom-2569)</label>
+      <input type="text" id="newSiteIdInput" placeholder="mind-aom-2569">
+    </div>
+    <div class="admin-field">
+      <label>ลิงก์โฟลเดอร์ Google Drive ของงานนี้ (เว้นว่างไว้ได้ ให้ลูกค้าตั้งเองทีหลัง)</label>
+      <input type="text" id="newSiteFolderInput" placeholder="วางลิงก์โฟลเดอร์ Google Drive ที่นี่ หรือเว้นว่างไว้ก่อนก็ได้">
+    </div>
+    <div class="admin-field">
+      <label>รหัสผ่านหลังบ้านของงานนี้</label>
+      <input type="text" id="newSitePasswordInput" placeholder="ตั้งรหัสผ่านให้ลูกค้า">
+    </div>
+    <div class="admin-field">
+      <label>ชื่อสตูดิโอ / แบรนด์</label>
+      <input type="text" id="newSiteBrandInput" placeholder="Bangkok Wedding Studio">
+    </div>
+    <div class="admin-field">
+      <label>ชื่อคู่บ่าวสาว / ชื่ออีเวนต์</label>
+      <input type="text" id="newSiteCoupleInput" placeholder="เช่น กันต์ & แนน">
+    </div>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="createSiteBtn">สร้างงานใหม่</button>
+      <span class="admin-status" id="createSiteStatus"></span>
+    </div>
+    <div class="new-site-result" id="newSiteResult" style="display:none;">
+      <div class="new-site-result-label">ลิงก์สำหรับลูกค้า (ส่งลิงก์นี้ให้ลูกค้า):</div>
+      <div class="new-site-link-row">
+        <input type="text" id="newSiteLinkOutput" readonly>
+        <button class="admin-btn" id="copyNewSiteLinkBtn">คัดลอก</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>งานทั้งหมด</h2>
+    <div class="admin-save-row">
+      <button class="admin-btn" id="refreshSitesBtn">รีเฟรชรายชื่องาน</button>
+      <span class="admin-status" id="sitesListStatus"></span>
+    </div>
+    <div id="sitesListWrap"></div>
+  </div>
 </div>
 
 <script>
 // ========= CONFIG =========
-const API_KEY = 'AIzaSyAKYbYpuXUxG7VlW8AdRga9tPNU7oLJKLY';
-const FIREBASE_DB_URL = 'https://bangkok-wedding-studio-c76a0-default-rtdb.asia-southeast1.firebasedatabase.app';
-const DEFAULT_PASSWORD = 'bws2026';
-const POLL_MS = 8000;
-let FOLDER_ID = null;
+// ค่าทั้งหมดด้านล่างนี้ดึงมาจากไฟล์ config.js (แก้ที่นั่นแทน ไม่ต้องแก้ตรงนี้)
+const API_KEY = SITE_CONFIG.apiKey;
+const DEFAULT_FOLDER_ID = SITE_CONFIG.driveFolderId;
+const DEFAULT_PASSWORD = SITE_CONFIG.adminPassword;
+const POLL_MS = SITE_CONFIG.pollIntervalMs;
+let FOLDER_ID = DEFAULT_FOLDER_ID;
 let currentFiles = [];
 let selectMode = false;
 const selectedIds = new Set();
@@ -464,21 +617,15 @@ const THEME_PRESETS = [
   { name:'ถ่านดำ',            color:'#3A3733' },
 ];
 
-const BG_PRESETS = [
-  { name:'ครีมอบอุ่น (ดีฟอลต์)', color:'#F7F3EC' },
-  { name:'ชมพูอ่อน',           color:'#F5E9E3' },
-  { name:'มินต์อ่อน',          color:'#E9F1EA' },
-  { name:'เทาอุ่น',            color:'#EFEBE6' },
-  { name:'ขาวสะอาด',          color:'#FFFFFF' },
-];
-
 const STRINGS = {
   th: { eventSub:'ยินดีกับ', view:'VIEW', qr:'QR Code', download:'ดาวน์โหลด', select:'เลือกรูป', doneSelect:'เสร็จสิ้น', lang:'Language', langBtn:'ไทย', login:'เข้าสู่ระบบ',
         qrTitle:'สแกนเพื่อเปิดแกลเลอรีนี้', qrHint:'แชร์ลิงก์นี้ให้แขกเปิดดูรูปเองได้', scanSave:'SCAN เก็บภาพนี้',
-        photosWord:'ภาพ', updated:'อัปเดตล่าสุด', pickSelectFirst:'เลือกรูปก่อน แล้วค่อยกดดาวน์โหลด' },
+        photosWord:'ภาพ', updated:'อัปเดตล่าสุด', pickSelectFirst:'เลือกรูปก่อน แล้วค่อยกดดาวน์โหลด',
+        selectAll:'เลือกทั้งหมด', deselectAll:'ยกเลิกทั้งหมด', selectedCount:'เลือกแล้ว' },
   en: { eventSub:'Celebrating', view:'VIEW', qr:'QR Code', download:'Download', select:'Select', doneSelect:'Done', lang:'Language', langBtn:'EN', login:'Log in',
         qrTitle:'Scan to open this gallery', qrHint:'Share this link so guests can browse on their own phone', scanSave:'SCAN to save',
-        photosWord:'photos', updated:'Last updated', pickSelectFirst:'Select photos first, then tap download' },
+        photosWord:'photos', updated:'Last updated', pickSelectFirst:'Select photos first, then tap download',
+        selectAll:'Select all', deselectAll:'Deselect all', selectedCount:'selected' },
 };
 
 // ---- DOM refs ----
@@ -497,6 +644,7 @@ const langPillTop = document.getElementById('langPillTop');
 const btnQr = document.getElementById('btnQr');
 const btnDownload = document.getElementById('btnDownload');
 const btnSelect = document.getElementById('btnSelect');
+const selectAllLink = document.getElementById('selectAllLink');
 const btnLang = document.getElementById('btnLang');
 const lblQr = document.getElementById('lblQr');
 const lblDownload = document.getElementById('lblDownload');
@@ -525,7 +673,7 @@ async function fetchDriveFiles(){
     const data = await res.json();
     allFiles = allFiles.concat(data.files || []);
     pageToken = data.nextPageToken || '';
-  } while(pageToken);
+  } while (pageToken);
   return allFiles;
 }
 
@@ -536,9 +684,12 @@ function formatUpdated(files){
 }
 
 function renderMeta(files){
-  const dateText = eventDateValue || '—';
   const t = STRINGS[lang];
-  eventMeta.textContent = `${dateText} · ${files.length} ${t.photosWord} · ${t.updated} ${formatUpdated(files)}`;
+  const parts = [];
+  if(eventDateValue) parts.push(eventDateValue);
+  parts.push(`${files.length} ${t.photosWord}`);
+  parts.push(`${t.updated} ${formatUpdated(files)}`);
+  eventMeta.textContent = parts.join(' · ');
 }
 
 function renderGrid(files){
@@ -575,20 +726,31 @@ function renderGrid(files){
 function toggleSelect(id, cell){
   if(selectedIds.has(id)){ selectedIds.delete(id); cell.classList.remove('selected'); }
   else { selectedIds.add(id); cell.classList.add('selected'); }
+  updateSelectAllLink();
 }
 
-function renderHero(){
-  const heroImg = document.getElementById('heroImg');
-  const heroPlaceholder = document.getElementById('heroPlaceholder');
-  if(heroFileId){
-    heroImg.src = thumbUrl(heroFileId, 1000);
-    heroImg.style.display = 'block';
-    heroPlaceholder.style.display = 'none';
+function updateSelectAllLink(){
+  const t = STRINGS[lang];
+  if(!selectMode || currentFiles.length === 0){ selectAllLink.classList.remove('show'); return; }
+  selectAllLink.classList.add('show');
+  const allSelected = selectedIds.size === currentFiles.length;
+  if(allSelected){
+    selectAllLink.textContent = `${t.deselectAll} (${selectedIds.size})`;
+  } else if(selectedIds.size > 0){
+    selectAllLink.textContent = `${t.selectAll} (${selectedIds.size}/${currentFiles.length})`;
   } else {
-    heroImg.style.display = 'none';
-    heroPlaceholder.style.display = 'flex';
+    selectAllLink.textContent = t.selectAll;
   }
 }
+
+selectAllLink.addEventListener('click', () => {
+  if(currentFiles.length === 0) return;
+  const allSelected = selectedIds.size === currentFiles.length;
+  if(allSelected){ selectedIds.clear(); }
+  else { currentFiles.forEach(f => selectedIds.add(f.id)); }
+  renderGrid(currentFiles);
+  updateSelectAllLink();
+});
 
 function renderAdminPreview(files){
   const adminGrid = document.getElementById('adminPhotoGrid');
@@ -614,14 +776,13 @@ function renderAdminPreview(files){
 async function refresh(){
   if(!FOLDER_ID){
     currentFiles = [];
-    renderMeta([]);
-    grid.innerHTML = '';
-    const note = document.createElement('div');
-    note.className = 'empty-note';
-    note.textContent = lang === 'th' ? 'ยังไม่ได้ตั้งค่าอัลบั้ม Google Drive — ทีมงานเข้าหลังบ้านเพื่อเลือกอัลบั้ม' : 'No Google Drive album set yet — staff can pick one in the admin panel';
-    grid.appendChild(note);
-    renderAdminPreview([]);
-    showBanner('loading', lang==='th' ? 'ยังไม่ได้ตั้งค่าอัลบั้ม Google Drive' : 'No Google Drive album set yet');
+    renderMeta(currentFiles);
+    renderGrid(currentFiles);
+    renderAdminPreview(currentFiles);
+    updateSelectAllLink();
+    showBanner('loading', lang==='th'
+      ? 'ยังไม่ได้ตั้งค่าอัลบั้ม Google Drive — ไปที่หลังบ้าน > อัลบั้ม Google Drive เพื่อวางลิงก์โฟลเดอร์'
+      : 'No Google Drive album set yet — go to Admin > Google Drive Album to add a folder link');
     return;
   }
   try{
@@ -630,6 +791,7 @@ async function refresh(){
     renderMeta(files);
     renderGrid(files);
     renderAdminPreview(files);
+    updateSelectAllLink();
     hideBanner();
   }catch(err){
     if(err.status === 403){
@@ -647,18 +809,60 @@ const lightbox = document.getElementById('lightbox');
 const lightboxImg = document.getElementById('lightboxImg');
 const lightboxQr = document.getElementById('lightboxQr');
 const lightboxQrLabel = document.getElementById('lightboxQrLabel');
+const lightboxPrevBtn = document.getElementById('lightboxPrev');
+const lightboxNextBtn = document.getElementById('lightboxNext');
+let currentLightboxIndex = -1;
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 lightbox.addEventListener('click', (e) => { if(e.target===lightbox) closeLightbox(); });
 
+// สร้างลิงก์สำหรับแชร์/ทำ QR โดยคงพารามิเตอร์ ?site=xxx ไว้เสมอ (สำคัญมากตอนใช้ระบบหลายงาน)
+// แต่ตัดพารามิเตอร์อื่นที่ไม่เกี่ยวข้อง เช่น ?superadmin=1 ออก กันหลุดไปโผล่ในลิงก์ที่ส่งให้แขก
+function buildShareUrl(){
+  const url = new URL(window.location.href);
+  const site = url.searchParams.get('site');
+  url.search = '';
+  if(site) url.searchParams.set('site', site);
+  return url.toString();
+}
+
 function openLightbox(fileId){
-  lightboxImg.src = thumbUrl(fileId, 1200);
-  lightboxQr.innerHTML = '';
-  lightboxQrLabel.textContent = STRINGS[lang].scanSave;
-  const viewLink = `https://drive.google.com/file/d/${fileId}/view`;
-  if(window.QRCode){ new QRCode(lightboxQr, { text: viewLink, width:70, height:70, colorDark:'#2B2823', colorLight:'#ffffff' }); }
+  currentLightboxIndex = currentFiles.findIndex(f => f.id === fileId);
+  renderLightbox();
   lightbox.classList.add('open');
 }
+function renderLightbox(){
+  if(currentLightboxIndex < 0 || currentLightboxIndex >= currentFiles.length) return;
+  const f = currentFiles[currentLightboxIndex];
+  lightboxImg.src = thumbUrl(f.id, 1200);
+  lightboxQr.innerHTML = '';
+  lightboxQrLabel.textContent = STRINGS[lang].scanSave;
+  const viewLink = `https://drive.google.com/file/d/${f.id}/view`;
+  if(window.QRCode){ new QRCode(lightboxQr, { text: viewLink, width:70, height:70, colorDark:'#2B2823', colorLight:'#ffffff' }); }
+  lightboxPrevBtn.style.visibility = currentLightboxIndex > 0 ? 'visible' : 'hidden';
+  lightboxNextBtn.style.visibility = currentLightboxIndex < currentFiles.length - 1 ? 'visible' : 'hidden';
+}
+function lightboxPrev(){ if(currentLightboxIndex > 0){ currentLightboxIndex--; renderLightbox(); } }
+function lightboxNext(){ if(currentLightboxIndex < currentFiles.length - 1){ currentLightboxIndex++; renderLightbox(); } }
 function closeLightbox(){ lightbox.classList.remove('open'); lightboxImg.src=''; }
+
+lightboxPrevBtn.addEventListener('click', (e) => { e.stopPropagation(); lightboxPrev(); });
+lightboxNextBtn.addEventListener('click', (e) => { e.stopPropagation(); lightboxNext(); });
+
+document.addEventListener('keydown', (e) => {
+  if(!lightbox.classList.contains('open')) return;
+  if(e.key === 'ArrowLeft') lightboxPrev();
+  if(e.key === 'ArrowRight') lightboxNext();
+});
+
+// ---- swipe ซ้าย/ขวา บนมือถือ ----
+let touchStartX = null;
+lightbox.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive:true });
+lightbox.addEventListener('touchend', (e) => {
+  if(touchStartX === null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(Math.abs(dx) > 40){ dx > 0 ? lightboxPrev() : lightboxNext(); }
+  touchStartX = null;
+}, { passive:true });
 
 // ---- QR modal ----
 const qrModal = document.getElementById('qrModal');
@@ -668,7 +872,7 @@ qrModal.addEventListener('click', (e) => { if(e.target===qrModal) closeQrModal()
 btnQr.addEventListener('click', openQrModal);
 function openQrModal(){
   qrModalHolder.innerHTML = '';
-  const pageUrl = window.location.href.split('?')[0];
+  const pageUrl = buildShareUrl();
   if(window.QRCode){ new QRCode(qrModalHolder, { text: pageUrl, width:160, height:160, colorDark:'#2B2823', colorLight:'#ffffff' }); }
   qrModal.classList.add('open');
 }
@@ -683,6 +887,7 @@ btnSelect.addEventListener('click', () => {
   btnSelect.classList.toggle('active-toggle', selectMode);
   lblSelect.textContent = selectMode ? STRINGS[lang].doneSelect : STRINGS[lang].select;
   if(!selectMode){ selectedIds.clear(); renderGrid(currentFiles); }
+  updateSelectAllLink();
 });
 btnDownload.addEventListener('click', () => {
   if(selectedIds.size === 0){
@@ -690,25 +895,27 @@ btnDownload.addEventListener('click', () => {
     setTimeout(hideBanner, 2500);
     return;
   }
-  // Use hidden <a download> clicks instead of window.open — browsers block
-  // multiple window.open() calls from one click as popups, but sequential
-  // anchor clicks are treated as normal downloads and go through fine.
+  // Fire every download synchronously inside this one click handler (no
+  // setTimeout stagger). Browsers only treat downloads as "user initiated"
+  // while still inside the click's call stack — delaying them with
+  // setTimeout loses that, and the browser silently blocks every file
+  // after the first. Triggering them all at once gives every file the best
+  // chance of going through under a single "allow multiple downloads"
+  // permission from the browser.
   const ids = Array.from(selectedIds);
-  ids.forEach((id, i) => {
-    setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = `https://drive.google.com/uc?export=download&id=${id}`;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }, i * 400);
+  ids.forEach((id) => {
+    const a = document.createElement('a');
+    a.href = `https://drive.google.com/uc?export=download&id=${id}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   });
   showBanner('loading', lang === 'th'
-    ? `กำลังดาวน์โหลด ${ids.length} รูป — ถ้าเบราว์เซอร์ถามเรื่องอนุญาตป๊อปอัพ กด "อนุญาต" ได้เลย`
-    : `Downloading ${ids.length} photos — allow pop-ups if your browser asks`);
-  setTimeout(hideBanner, 4000);
+    ? `กำลังดาวน์โหลด ${ids.length} รูป — ถ้าเบราว์เซอร์ขึ้นแจ้งเตือน "อนุญาตดาวน์โหลดหลายไฟล์" ใกล้แถบที่อยู่เว็บด้านบน ให้กด "อนุญาต" (Allow) แล้วกดปุ่มดาวน์โหลดอีกครั้ง`
+    : `Downloading ${ids.length} photos — if your browser shows an "allow multiple downloads" prompt near the address bar, tap Allow, then press download again`);
+  setTimeout(hideBanner, 6000);
 });
 
 // ---- view density ----
@@ -719,13 +926,14 @@ viewToggle.addEventListener('click', () => { dense = !dense; grid.classList.togg
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('dark');
   themeKnob.textContent = document.body.classList.contains('dark') ? '🌙' : '☀️';
-  saveSetting(THEME_MODE_KEY, document.body.classList.contains('dark') ? 'dark' : 'light', false);
+  saveLocalPref('theme-mode', document.body.classList.contains('dark') ? 'dark' : 'light');
+  applyBackgroundVisual(latestSharedSettings.bgColor || '#F7F3EC', latestSharedSettings.bgStyle || 'solid', latestSharedSettings.bgImageDataUrl || '');
 });
 
 // ---- language ----
 function applyLangStrings(){
   const t = STRINGS[lang];
-  eventSub.textContent = eventSubValue || t.eventSub;
+  eventSub.textContent = eventSubValue;
   viewLabel.textContent = t.view;
   lblQr.textContent = t.qr;
   lblDownload.textContent = t.download;
@@ -737,11 +945,12 @@ function applyLangStrings(){
   document.getElementById('qrModalHint').textContent = t.qrHint;
   renderMeta(currentFiles);
   renderGrid(currentFiles);
+  updateSelectAllLink();
 }
 function toggleLang(){
   lang = lang === 'th' ? 'en' : 'th';
   applyLangStrings();
-  saveSetting(LANG_KEY, lang, false);
+  saveLocalPref('lang', lang);
 }
 langPillTop.addEventListener('click', toggleLang);
 btnLang.addEventListener('click', toggleLang);
@@ -763,17 +972,8 @@ function hexToRgba(hex, alpha){
 function applyAccent(color){
   document.documentElement.style.setProperty('--accent', color);
   document.documentElement.style.setProperty('--accent-soft', hexToRgba(color, 0.16));
-  document.querySelectorAll('.swatch[data-color]').forEach(s => {
-    if(s.closest('#swatchRow')) s.classList.toggle('selected', s.dataset.color.toLowerCase()===color.toLowerCase());
-  });
+  document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('selected', s.dataset.color.toLowerCase()===color.toLowerCase()));
   const custom = document.getElementById('customColorInput'); if(custom) custom.value = color;
-}
-function applyBg(color){
-  document.documentElement.style.setProperty('--bg', color);
-  document.querySelectorAll('.swatch[data-color]').forEach(s => {
-    if(s.closest('#bgSwatchRow')) s.classList.toggle('selected', s.dataset.color.toLowerCase()===color.toLowerCase());
-  });
-  const custom = document.getElementById('customBgInput'); if(custom) custom.value = color;
 }
 const swatchRow = document.getElementById('swatchRow');
 THEME_PRESETS.forEach(t => {
@@ -782,11 +982,48 @@ THEME_PRESETS.forEach(t => {
   sw.style.background = t.color;
   sw.dataset.color = t.color;
   sw.title = t.name;
-  sw.addEventListener('click', () => applyAccent(t.color));
+  sw.addEventListener('click', () => { saveSharedSettings({ accentColor: t.color }); });
   swatchRow.insertBefore(sw, swatchRow.lastElementChild);
 });
 document.getElementById('customColorInput').addEventListener('input', (e) => applyAccent(e.target.value));
+document.getElementById('customColorInput').addEventListener('change', (e) => saveSharedSettings({ accentColor: e.target.value }));
 
+// ---- พื้นหลังหน้าเว็บ ----
+const BG_PRESETS = [
+  { name:'ครีมอบอุ่น (ดีฟอลต์)', color:'#F7F3EC' },
+  { name:'ขาวสะอาด', color:'#FFFFFF' },
+  { name:'ชมพูอ่อนหวาน', color:'#FBEEF0' },
+  { name:'เขียวพาสเทล', color:'#EEF3EA' },
+  { name:'ฟ้าพาสเทล', color:'#EAF1F6' },
+];
+let pendingBgImageDataUrl = null;
+
+// ปรับพื้นหลังจริงบนหน้าจอ ใช้ทั้งตอนพรีวิวระหว่างแก้ และตอนโหลดค่าที่บันทึกไว้แล้ว
+// หมายเหตุ: ในโหมดมืดจะไม่ใช้สี/รูปพื้นหลังที่ตั้งไว้ เพื่อกันปัญหาสีอ่านยาก ใช้โทนมืดมาตรฐานแทนเสมอ
+function applyBackgroundVisual(bgColor, bgStyle, bgImageDataUrl){
+  const isDark = document.body.classList.contains('dark');
+  if(isDark){
+    document.documentElement.style.removeProperty('--bg');
+    document.body.style.backgroundImage = '';
+    return;
+  }
+  const color = bgColor || '#F7F3EC';
+  document.documentElement.style.setProperty('--bg', color);
+  if(bgStyle === 'image' && bgImageDataUrl){
+    document.body.style.backgroundImage = `url(${bgImageDataUrl})`;
+  } else if(bgStyle === 'gradient'){
+    const accent = latestSharedSettings.accentColor || SITE_CONFIG.accentColor;
+    document.body.style.backgroundImage = `linear-gradient(160deg, ${color} 0%, ${hexToRgba(accent, 0.28)} 100%)`;
+  } else {
+    document.body.style.backgroundImage = '';
+  }
+}
+function previewBgFromInputs(){
+  const color = document.getElementById('customBgColorInput').value;
+  const style = document.getElementById('bgStyleSelect').value;
+  const img = style === 'image' ? (pendingBgImageDataUrl || latestSharedSettings.bgImageDataUrl || '') : '';
+  applyBackgroundVisual(color, style, img);
+}
 const bgSwatchRow = document.getElementById('bgSwatchRow');
 BG_PRESETS.forEach(t => {
   const sw = document.createElement('div');
@@ -794,21 +1031,100 @@ BG_PRESETS.forEach(t => {
   sw.style.background = t.color;
   sw.dataset.color = t.color;
   sw.title = t.name;
-  sw.addEventListener('click', () => applyBg(t.color));
+  sw.addEventListener('click', () => {
+    document.getElementById('customBgColorInput').value = t.color;
+    document.querySelectorAll('#bgSwatchRow .swatch').forEach(s => s.classList.toggle('selected', s.dataset.color.toLowerCase()===t.color.toLowerCase()));
+    previewBgFromInputs();
+  });
   bgSwatchRow.insertBefore(sw, bgSwatchRow.lastElementChild);
 });
-document.getElementById('customBgInput').addEventListener('input', (e) => applyBg(e.target.value));
+document.getElementById('customBgColorInput').addEventListener('input', previewBgFromInputs);
+document.getElementById('bgStyleSelect').addEventListener('change', () => {
+  document.getElementById('bgImageUploadWrap').style.display = document.getElementById('bgStyleSelect').value === 'image' ? 'block' : 'none';
+  previewBgFromInputs();
+});
+document.getElementById('bgImageFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 2*1024*1024){
+    alert(lang==='th' ? 'ไฟล์ใหญ่เกินไป กรุณาใช้รูปที่เล็กกว่า 2MB' : 'File too large, please use an image under 2MB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    pendingBgImageDataUrl = reader.result;
+    previewBgFromInputs();
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById('saveBgBtn').addEventListener('click', async () => {
+  const status = document.getElementById('bgSaveStatus');
+  const color = document.getElementById('customBgColorInput').value;
+  const style = document.getElementById('bgStyleSelect').value;
+  if(style === 'image' && !pendingBgImageDataUrl && !latestSharedSettings.bgImageDataUrl){
+    status.style.color='var(--err)'; status.textContent='กรุณาเลือกรูปพื้นหลังก่อน'; return;
+  }
+  status.style.color=''; status.textContent='กำลังบันทึก...';
+  const patch = { bgColor: color, bgStyle: style };
+  if(style === 'image' && pendingBgImageDataUrl) patch.bgImageDataUrl = pendingBgImageDataUrl;
+  await saveSharedSettings(patch);
+  pendingBgImageDataUrl = null;
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
+});
 
-document.getElementById('saveColorsBtn').addEventListener('click', async () => {
-  const status = document.getElementById('colorsSaveStatus');
+// ---- รูปแบบขอบมุม ----
+const CORNER_PRESETS = {
+  square: { lg:'8px',  md:'6px',  sm:'6px' },
+  soft:   { lg:'26px', md:'14px', sm:'8px' },
+  round:  { lg:'34px', md:'20px', sm:'12px' },
+  pill:   { lg:'44px', md:'28px', sm:'16px' },
+};
+function applyCornerStyle(style){
+  const p = CORNER_PRESETS[style] || CORNER_PRESETS.soft;
+  document.documentElement.style.setProperty('--radius-lg', p.lg);
+  document.documentElement.style.setProperty('--radius-md', p.md);
+  document.documentElement.style.setProperty('--radius-sm', p.sm);
+  const sel = document.getElementById('cornerStyleSelect');
+  if(sel && document.activeElement !== sel) sel.value = style || 'soft';
+}
+document.getElementById('cornerStyleSelect').addEventListener('change', (e) => applyCornerStyle(e.target.value));
+document.getElementById('saveCornerBtn').addEventListener('click', async () => {
+  const status = document.getElementById('cornerSaveStatus');
+  const style = document.getElementById('cornerStyleSelect').value;
   status.textContent = 'กำลังบันทึก...';
-  const accentColor = document.getElementById('customColorInput').value;
-  const bgColor = document.getElementById('customBgInput').value;
-  await Promise.all([
-    saveSetting(ACCENT_KEY, accentColor),
-    saveSetting(BG_KEY, bgColor),
-  ]);
-  status.textContent = 'บันทึกแล้ว ✓';
+  await saveSharedSettings({ cornerStyle: style });
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
+});
+
+// ---- ภาพหน้าปก (hero banner) ----
+let heroFileId = null;
+function renderHero(){
+  const heroImg = document.getElementById('heroImg');
+  const heroPlaceholder = document.getElementById('heroPlaceholder');
+  if(heroFileId){
+    heroImg.src = thumbUrl(heroFileId, 1000);
+    heroImg.style.display = 'block';
+    heroPlaceholder.style.display = 'none';
+  } else {
+    heroImg.style.display = 'none';
+    heroPlaceholder.style.display = 'flex';
+  }
+}
+document.getElementById('saveCoverBtn').addEventListener('click', async () => {
+  const status = document.getElementById('coverSaveStatus');
+  status.textContent = 'กำลังบันทึก...';
+  await saveSharedSettings({ coverPhotoId: heroFileId || '' });
+  renderHero();
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
+});
+document.getElementById('coverResetBtn').addEventListener('click', async () => {
+  const status = document.getElementById('coverSaveStatus');
+  status.textContent = 'กำลังรีเซ็ต...';
+  heroFileId = null;
+  await saveSharedSettings({ coverPhotoId: '' });
+  renderHero();
+  renderAdminPreview(currentFiles);
+  status.textContent = 'รีเซ็ตแล้ว ✓';
 });
 
 // ---- font picker ----
@@ -832,7 +1148,7 @@ document.getElementById('logoFileInput').addEventListener('change', (e) => {
     const dataUrl = reader.result;
     document.getElementById('logoPreview').innerHTML = `<img src="${dataUrl}">`;
     applyLogo(dataUrl);
-    await saveSetting(LOGO_KEY, dataUrl, true);
+    await saveSharedSettings({ logoDataUrl: dataUrl });
   };
   reader.readAsDataURL(file);
 });
@@ -841,37 +1157,71 @@ function applyLogo(dataUrl){
 }
 
 // ---- shared/local persisted settings ----
-const BRAND_KEY = 'bws-gallery2:brand-name';
-const EVENT_SUB_KEY = 'bws-gallery2:event-sub';
-const COUPLE_KEY = 'bws-gallery2:couple-names';
-const EVENT_DATE_KEY = 'bws-gallery2:event-date';
-const FOLDER_KEY = 'bws-gallery2:drive-folder-id';
-const THEME_MODE_KEY = 'bws-gallery2:theme-mode';
-const LANG_KEY = 'bws-gallery2:lang';
-const ACCENT_KEY = 'bws-gallery2:accent-color';
-const BG_KEY = 'bws-gallery2:bg-color';
-const LOGO_KEY = 'bws-gallery2:logo-data-url';
-const FONT_KEY = 'bws-gallery2:couple-font';
-const PASSWORD_KEY = 'bws-gallery2:admin-password';
-const COVER_KEY = 'bws-gallery2:cover-photo-id';
-
 let eventSubValue = '';
 let eventDateValue = '';
-let heroFileId = null;
 
-async function saveSetting(key, value){
-  try{
-    const url = `${FIREBASE_DB_URL}/${encodeURIComponent(key)}.json`;
-    await fetch(url, { method:'PUT', body: JSON.stringify(value) });
-  }catch(err){ /* offline or Firebase unreachable — fails silently */ }
+// ---- ค่าส่วนตัวของเบราว์เซอร์นี้เท่านั้น (ธีมสว่าง/มืด, ภาษา) — เก็บด้วย localStorage เสมอ ----
+function loadLocalPref(key, fallback){
+  try{ const v = localStorage.getItem('bws-gallery2:' + key); return v === null ? fallback : v; }
+  catch(err){ return fallback; }
 }
-async function loadSetting(key){
-  try{
-    const url = `${FIREBASE_DB_URL}/${encodeURIComponent(key)}.json`;
-    const res = await fetch(url);
-    if(!res.ok) return null;
-    return await res.json();
-  }catch(err){ return null; }
+function saveLocalPref(key, value){
+  try{ localStorage.setItem('bws-gallery2:' + key, value); }catch(err){}
+}
+
+// ---- ค่ากลางที่ทุกคนเห็นร่วมกัน (ชื่อแบรนด์, ชื่อคู่บ่าวสาว, สี, โลโก้, Folder ID, รหัสผ่าน) ----
+// ถ้าตั้งค่า Firebase ไว้ใน config.js จะ sync กันแบบ real-time ข้ามเครื่อง/เบราว์เซอร์ทันที
+// ถ้ายังไม่ได้ตั้งค่า Firebase จะ fallback ไปเก็บใน localStorage ของเครื่องนั้นแทน (ไม่ sync ข้ามเครื่อง)
+// ใช้ siteId เป็นส่วนหนึ่งของ path เสมอ เพื่อให้หลายเว็บ (หลายงานแต่ง) ใช้ Firebase
+// Project เดียวกันได้โดยข้อมูลไม่ปนกัน — ลำดับความสำคัญ: query string ?site=xxx ในลิงก์
+// (ใช้ตอนแอดมินสร้างงานใหม่ผ่านหน้าเว็บ) > siteId ที่ตั้งไว้ใน config.js > path กลาง 'settings' เดิม
+function sanitizeSiteId(id){
+  return (id || '').toString().trim().replace(/[.#$\[\]\/\s]+/g, '-');
+}
+const urlParams = new URLSearchParams(location.search);
+const querySiteId = urlParams.get('site');
+const isSuperAdminUrl = urlParams.has('superadmin');
+const SITE_ID = sanitizeSiteId(querySiteId || SITE_CONFIG.siteId);
+const SETTINGS_PATH = SITE_ID ? `sites/${SITE_ID}/settings` : 'settings';
+let db = null;
+let firebaseReady = false;
+let latestSharedSettings = {};
+
+try{
+  if(window.firebase && SITE_CONFIG.firebase && SITE_CONFIG.firebase.databaseURL){
+    firebase.initializeApp(SITE_CONFIG.firebase);
+    db = firebase.database();
+    firebaseReady = true;
+  }
+}catch(err){ console.warn('Firebase init failed, falling back to localStorage only:', err); }
+
+async function saveSharedSettings(patch){
+  latestSharedSettings = Object.assign({}, latestSharedSettings, patch);
+  applySharedSettings(latestSharedSettings);
+  if(firebaseReady){
+    try{ await db.ref(SETTINGS_PATH).update(patch); return; }
+    catch(err){ console.warn('Firebase save failed, falling back to localStorage:', err); }
+  }
+  Object.keys(patch).forEach(k => saveLocalPref(k, patch[k]));
+}
+
+function loadSharedSettingsFallback(){
+  return {
+    brand: loadLocalPref('brand', ''),
+    eventSub: loadLocalPref('eventSub', ''),
+    coupleNames: loadLocalPref('coupleNames', ''),
+    eventDate: loadLocalPref('eventDate', ''),
+    folderId: loadLocalPref('folderId', ''),
+    accentColor: loadLocalPref('accentColor', ''),
+    logoDataUrl: loadLocalPref('logoDataUrl', ''),
+    coupleFont: loadLocalPref('coupleFont', ''),
+    adminPassword: loadLocalPref('adminPassword', ''),
+    bgColor: loadLocalPref('bgColor', ''),
+    bgStyle: loadLocalPref('bgStyle', ''),
+    bgImageDataUrl: loadLocalPref('bgImageDataUrl', ''),
+    cornerStyle: loadLocalPref('cornerStyle', ''),
+    coverPhotoId: loadLocalPref('coverPhotoId', ''),
+  };
 }
 
 function parseFolderId(input){
@@ -885,38 +1235,89 @@ function parseFolderId(input){
   return null;
 }
 
-async function loadAllSettings(){
-  const [brand, sub, couple, date, folder, theme, savedLang, accent, logo, font, cover, bg] = await Promise.all([
-    loadSetting(BRAND_KEY, true), loadSetting(EVENT_SUB_KEY, true), loadSetting(COUPLE_KEY, true),
-    loadSetting(EVENT_DATE_KEY, true), loadSetting(FOLDER_KEY, true), loadSetting(THEME_MODE_KEY, false),
-    loadSetting(LANG_KEY, false), loadSetting(ACCENT_KEY, true), loadSetting(LOGO_KEY, true), loadSetting(FONT_KEY, true),
-    loadSetting(COVER_KEY, true), loadSetting(BG_KEY, true),
-  ]);
+// เรียกทุกครั้งที่มีค่าตั้งค่าใหม่เข้ามา (ทั้งตอนโหลดหน้าครั้งแรก และทุกครั้งที่ Firebase
+// แจ้งว่ามีการเปลี่ยนแปลง ไม่ว่าจะมาจากเบราว์เซอร์เครื่องไหนก็ตาม) เพื่ออัปเดตหน้าจอแบบ real-time
+function applySharedSettings(data){
+  data = data || {};
+  // แยกให้ชัดระหว่าง "ยังไม่เคยมีข้อมูลเลย" (key ไม่มีอยู่จริง เช่น เว็บเดี่ยวที่ยังไม่ตั้งค่า Firebase
+  // หรือยังไม่เคยบันทึกอะไรเลย — กรณีนี้ค่อย fallback ไปใช้ข้อความเดโมจาก config.js) กับ
+  // "ตั้งใจเว้นว่างไว้" (เช่น งานที่ super admin สร้างแล้วแต่ยังไม่กรอกให้ลูกค้า — กรณีนี้ต้องโชว์ว่างจริงๆ
+  // ไม่ใช่ข้อความเดโม เพราะจะดูเหมือนเว็บลืมตั้งค่าให้ลูกค้า)
+  const hasBrandField = Object.prototype.hasOwnProperty.call(data, 'brand');
+  const brand = hasBrandField ? data.brand : SITE_CONFIG.brandName;
+  const hasSubField = Object.prototype.hasOwnProperty.call(data, 'eventSub');
+  const sub = hasSubField ? data.eventSub : SITE_CONFIG.eventSub;
+  const hasCoupleField = Object.prototype.hasOwnProperty.call(data, 'coupleNames');
+  const couple = hasCoupleField ? data.coupleNames : SITE_CONFIG.coupleNames;
+  const hasDateField = Object.prototype.hasOwnProperty.call(data, 'eventDate');
+  const date = hasDateField ? data.eventDate : SITE_CONFIG.eventDate;
+  const hasFolderField = Object.prototype.hasOwnProperty.call(data, 'folderId');
+  const folder = hasFolderField ? data.folderId : DEFAULT_FOLDER_ID;
+  const accent = data.accentColor || SITE_CONFIG.accentColor;
+  const logo = data.logoDataUrl || '';
+  const font = data.coupleFont || SITE_CONFIG.coupleFont;
+  const bgColor = data.bgColor || '#F7F3EC';
+  const bgStyle = data.bgStyle || 'solid';
+  const bgImage = data.bgImageDataUrl || '';
+  const cornerStyle = data.cornerStyle || 'soft';
+  const coverPhotoId = data.coverPhotoId || '';
 
-  if(cover){ heroFileId = cover; }
+  if(brand || logo){
+    logoCircle.style.display = '';
+    if(brand && !logo) logoLetter.textContent = brand.trim().charAt(0).toUpperCase();
+    else if(!logo) logoLetter.textContent = '';
+  } else {
+    logoCircle.style.display = 'none';
+  }
+  eventSubValue = sub;
+  eventTitle.textContent = couple;
+  eventDateValue = date;
+  const folderChanged = folder !== FOLDER_ID;
+  FOLDER_ID = folder;
+  applyAccent(accent);
+  if(logo) applyLogo(logo);
+  document.documentElement.style.setProperty('--couple-font', font);
+  applyBackgroundVisual(bgColor, bgStyle, bgImage);
+  applyCornerStyle(cornerStyle);
+  heroFileId = coverPhotoId || null;
   renderHero();
 
-  if(brand){ logoLetter.textContent = brand.trim().charAt(0).toUpperCase(); }
-  if(sub) eventSubValue = sub;
-  if(couple) eventTitle.textContent = couple;
-  if(date) eventDateValue = date;
-  FOLDER_ID = folder || null;
-  if(theme === 'dark'){ document.body.classList.add('dark'); themeKnob.textContent = '🌙'; }
-  if(savedLang === 'en' || savedLang === 'th') lang = savedLang;
-  if(accent) applyAccent(accent); else applyAccent(THEME_PRESETS[0].color);
-  if(bg) applyBg(bg); else applyBg(BG_PRESETS[0].color);
-  if(logo) applyLogo(logo);
-  if(font){ document.documentElement.style.setProperty('--couple-font', font); }
-
-  const ib = document.getElementById('inputBrand'); if(ib) ib.value = brand || '';
-  const isub = document.getElementById('inputEventSub'); if(isub) isub.value = sub || '';
-  const icn = document.getElementById('inputCoupleNames'); if(icn) icn.value = couple || '';
-  const ied = document.getElementById('inputEventDate'); if(ied) ied.value = date || '';
-  const fi = document.getElementById('folderInput'); if(fi) fi.value = folder ? `https://drive.google.com/drive/folders/${folder}` : '';
+  const ib = document.getElementById('inputBrand'); if(ib && document.activeElement !== ib) ib.value = brand || '';
+  const isub = document.getElementById('inputEventSub'); if(isub && document.activeElement !== isub) isub.value = sub || '';
+  const icn = document.getElementById('inputCoupleNames'); if(icn && document.activeElement !== icn) icn.value = couple || '';
+  const ied = document.getElementById('inputEventDate'); if(ied && document.activeElement !== ied) ied.value = date || '';
+  const fi = document.getElementById('folderInput'); if(fi && document.activeElement !== fi) fi.value = folder ? `https://drive.google.com/drive/folders/${folder}` : '';
   if(logo) document.getElementById('logoPreview').innerHTML = `<img src="${logo}">`;
-  if(font){ fontSelect.value = font; fontPreview.style.fontFamily = font; }
+  fontSelect.value = font; fontPreview.style.fontFamily = font;
+  const cbi = document.getElementById('customBgColorInput'); if(cbi && document.activeElement !== cbi) cbi.value = bgColor;
+  const bss = document.getElementById('bgStyleSelect'); if(bss && document.activeElement !== bss) bss.value = bgStyle;
+  document.getElementById('bgImageUploadWrap').style.display = bgStyle === 'image' ? 'block' : 'none';
+  document.querySelectorAll('#bgSwatchRow .swatch').forEach(s => s.classList.toggle('selected', s.dataset.color.toLowerCase() === bgColor.toLowerCase()));
 
   applyLangStrings();
+  if(folderChanged) refresh();
+}
+
+function initSharedSettingsSync(){
+  if(firebaseReady){
+    // .on('value', ...) ยิง callback ทันทีตอน subscribe ด้วยค่าปัจจุบัน แล้วยิงซ้ำอัตโนมัติ
+    // ทุกครั้งที่มีใครก็ตามเขียนค่าใหม่เข้ามา — นี่คือกลไก real-time หลักของทั้งเว็บ
+    db.ref(SETTINGS_PATH).on('value', (snapshot) => {
+      latestSharedSettings = snapshot.val() || {};
+      applySharedSettings(latestSharedSettings);
+    }, (err) => { console.warn('Firebase sync error:', err); });
+  } else {
+    latestSharedSettings = loadSharedSettingsFallback();
+    applySharedSettings(latestSharedSettings);
+  }
+}
+
+async function loadAllSettings(){
+  const theme = loadLocalPref('theme-mode', SITE_CONFIG.defaultTheme);
+  const savedLang = loadLocalPref('lang', SITE_CONFIG.defaultLang);
+  if(theme === 'dark'){ document.body.classList.add('dark'); themeKnob.textContent = '🌙'; }
+  lang = (savedLang === 'en' || savedLang === 'th') ? savedLang : SITE_CONFIG.defaultLang;
+  initSharedSettingsSync();
 }
 
 // ---- admin field save handlers ----
@@ -924,9 +1325,8 @@ document.getElementById('saveBrandBtn').addEventListener('click', async () => {
   const brand = document.getElementById('inputBrand').value.trim();
   const status = document.getElementById('brandSaveStatus');
   status.textContent = 'กำลังบันทึก...';
-  await saveSetting(BRAND_KEY, brand, true);
-  if(brand){ if(!document.getElementById('logoPreview').querySelector('img')) logoLetter.textContent = brand.charAt(0).toUpperCase(); }
-  status.textContent = 'บันทึกแล้ว ✓';
+  await saveSharedSettings({ brand });
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
 });
 
 document.getElementById('saveEventBtn').addEventListener('click', async () => {
@@ -936,45 +1336,8 @@ document.getElementById('saveEventBtn').addEventListener('click', async () => {
   const font = fontSelect.value;
   const status = document.getElementById('eventSaveStatus');
   status.textContent = 'กำลังบันทึก...';
-  await Promise.all([
-    saveSetting(EVENT_SUB_KEY, sub, true),
-    saveSetting(COUPLE_KEY, couple, true),
-    saveSetting(EVENT_DATE_KEY, date, true),
-    saveSetting(FONT_KEY, font, true),
-  ]);
-  if(sub){ eventSubValue = sub; eventSub.textContent = sub; }
-  if(couple) eventTitle.textContent = couple;
-  if(date){ eventDateValue = date; renderMeta(currentFiles); }
-  status.textContent = 'บันทึกแล้ว ✓';
-});
-
-document.getElementById('coverResetBtn').addEventListener('click', async () => {
-  const status = document.getElementById('coverSaveStatus');
-  status.textContent = 'กำลังรีเซ็ต...';
-  heroFileId = null;
-  await saveSetting(COVER_KEY, null);
-  renderHero();
-  renderAdminPreview(currentFiles);
-  status.textContent = 'รีเซ็ตแล้ว ✓';
-});
-
-document.getElementById('saveCoverBtn').addEventListener('click', async () => {
-  const status = document.getElementById('coverSaveStatus');
-  status.textContent = 'กำลังบันทึก...';
-  await saveSetting(COVER_KEY, heroFileId);
-  renderHero();
-  status.textContent = 'บันทึกแล้ว ✓';
-});
-
-document.getElementById('folderResetBtn').addEventListener('click', async () => {
-  const status = document.getElementById('folderStatus');
-  status.style.color = '';
-  status.textContent = 'กำลังรีเซ็ต...';
-  await saveSetting(FOLDER_KEY, null);
-  FOLDER_ID = null;
-  document.getElementById('folderInput').value = '';
-  await refresh();
-  status.textContent = 'รีเซ็ตแล้ว — ยังไม่มีอัลบั้มตั้งค่าไว้';
+  await saveSharedSettings({ eventSub: sub, coupleNames: couple, eventDate: date, coupleFont: font });
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ (แขกทุกคนเห็นทันที)' : 'บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)';
 });
 
 document.getElementById('folderSaveBtn').addEventListener('click', async () => {
@@ -983,10 +1346,9 @@ document.getElementById('folderSaveBtn').addEventListener('click', async () => {
   const parsed = parseFolderId(folderInput.value);
   if(!parsed){ status.style.color='var(--err)'; status.textContent='ลิงก์ไม่ถูกต้อง'; return; }
   status.style.color=''; status.textContent='กำลังบันทึก...';
-  await saveSetting(FOLDER_KEY, parsed, true);
-  FOLDER_ID = parsed;
+  await saveSharedSettings({ folderId: parsed });
   await refresh();
-  status.textContent = 'บันทึกแล้ว ✓ โหลดรูปใหม่แล้ว';
+  status.textContent = firebaseReady ? 'บันทึกแล้ว ✓ แขกทุกคนโหลดรูปใหม่แล้ว' : 'บันทึกแล้ว ✓ โหลดรูปใหม่แล้ว (เฉพาะเบราว์เซอร์นี้)';
 });
 
 document.getElementById('savePasswordBtn').addEventListener('click', async () => {
@@ -994,7 +1356,7 @@ document.getElementById('savePasswordBtn').addEventListener('click', async () =>
   const status = document.getElementById('passwordSaveStatus');
   if(!val){ status.style.color='var(--err)'; status.textContent='กรอกรหัสผ่านใหม่ก่อน'; return; }
   status.style.color=''; status.textContent='กำลังบันทึก...';
-  await saveSetting(PASSWORD_KEY, val, true);
+  await saveSharedSettings({ adminPassword: val });
   document.getElementById('newPasswordInput').value = '';
   status.textContent = 'เปลี่ยนรหัสผ่านแล้ว ✓';
 });
@@ -1018,8 +1380,7 @@ function closeLoginModal(){ loginModal.classList.remove('open'); }
 
 document.getElementById('loginSubmitBtn').addEventListener('click', async () => {
   const entered = loginPasswordInput.value;
-  const savedPassword = await loadSetting(PASSWORD_KEY, true);
-  const correctPassword = savedPassword || DEFAULT_PASSWORD;
+  const correctPassword = (latestSharedSettings && latestSharedSettings.adminPassword) || DEFAULT_PASSWORD;
   if(entered === correctPassword){
     closeLoginModal();
     showAdmin();
@@ -1036,19 +1397,186 @@ function showAdmin(){
 }
 function showGuest(){
   adminWrap.classList.remove('show');
+  superAdminWrap.classList.remove('show');
   guestPage.classList.remove('hidden');
   bottomToolbar.style.display = 'flex';
 }
 document.getElementById('backToGalleryBtn').addEventListener('click', showGuest);
 document.getElementById('logoutBtn').addEventListener('click', showGuest);
 
-// ---- boot ----
-showBanner('loading', lang==='th' ? 'กำลังเชื่อมต่อ Google Drive...' : 'Connecting to Google Drive...');
-(async () => {
-  await loadAllSettings();
-  await refresh();
-})();
-setInterval(refresh, POLL_MS);
+// ---- super admin (สร้างงานใหม่ / จัดการหลายงาน) ----
+// เข้าถึงได้เฉพาะทางลิงก์ที่มี ?superadmin=1 ต่อท้าย เพื่อไม่ให้ลูกค้าทั่วไปเห็นปุ่มนี้เลย
+const superAdminWrap = document.getElementById('superAdminWrap');
+const superAdminLoginModal = document.getElementById('superAdminLoginModal');
+const superAdminPasswordInput = document.getElementById('superAdminPasswordInput');
+const superAdminLoginError = document.getElementById('superAdminLoginError');
+
+function openSuperAdminLogin(){
+  superAdminLoginError.classList.remove('show');
+  superAdminPasswordInput.value = '';
+  superAdminLoginModal.classList.add('open');
+  setTimeout(() => superAdminPasswordInput.focus(), 50);
+}
+document.getElementById('superAdminLoginClose').addEventListener('click', () => {
+  superAdminLoginModal.classList.remove('open');
+});
+superAdminLoginModal.addEventListener('click', (e) => { if(e.target===superAdminLoginModal) superAdminLoginModal.classList.remove('open'); });
+
+document.getElementById('superAdminSubmitBtn').addEventListener('click', () => {
+  const entered = superAdminPasswordInput.value;
+  const correctPassword = SITE_CONFIG.superAdminPassword;
+  if(correctPassword && entered === correctPassword){
+    superAdminLoginModal.classList.remove('open');
+    showSuperAdmin();
+  } else {
+    superAdminLoginError.classList.add('show');
+  }
+});
+superAdminPasswordInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') document.getElementById('superAdminSubmitBtn').click(); });
+
+function showSuperAdmin(){
+  guestPage.classList.add('hidden');
+  bottomToolbar.style.display = 'none';
+  adminWrap.classList.remove('show');
+  superAdminWrap.classList.add('show');
+  loadSitesList();
+}
+// ออกจากหน้าผู้ดูแลระบบ: นำทางกลับไปหน้าแกลเลอรีจริง (ตัด ?superadmin=1 ออก) แทนการสลับ
+// class เฉยๆ เพราะตอนอยู่ในโหมด super admin เราข้ามการโหลดการตั้งค่า/รูปภาพของแกลเลอรีไปเลย
+// การนำทางใหม่ทำให้หน้าเว็บเริ่มโหลดแกลเลอรีให้ถูกต้องตั้งแต่ต้น
+function exitSuperAdmin(){
+  window.location.href = buildShareUrl();
+}
+document.getElementById('superAdminBackBtn').addEventListener('click', exitSuperAdmin);
+document.getElementById('superAdminLogoutBtn').addEventListener('click', exitSuperAdmin);
+
+document.getElementById('createSiteBtn').addEventListener('click', async () => {
+  const status = document.getElementById('createSiteStatus');
+  const resultBox = document.getElementById('newSiteResult');
+  resultBox.style.display = 'none';
+
+  const rawId = document.getElementById('newSiteIdInput').value;
+  const newId = sanitizeSiteId(rawId);
+  const folderRaw = document.getElementById('newSiteFolderInput').value.trim();
+  let parsedFolder = '';
+  if(folderRaw){
+    parsedFolder = parseFolderId(folderRaw);
+    if(!parsedFolder){ status.style.color='var(--err)'; status.textContent='ลิงก์โฟลเดอร์ Google Drive ไม่ถูกต้อง (จะเว้นว่างไว้ให้ลูกค้าตั้งเองทีหลังก็ได้)'; return; }
+  }
+  const pass = document.getElementById('newSitePasswordInput').value.trim();
+  const brand = document.getElementById('newSiteBrandInput').value.trim();
+  const couple = document.getElementById('newSiteCoupleInput').value.trim();
+
+  if(!newId){ status.style.color='var(--err)'; status.textContent='กรอกรหัสงานก่อน'; return; }
+  if(!pass){ status.style.color='var(--err)'; status.textContent='ตั้งรหัสผ่านของงานนี้ก่อน'; return; }
+  if(!firebaseReady){ status.style.color='var(--err)'; status.textContent='ยังไม่ได้ตั้งค่า Firebase ใน config.js'; return; }
+
+  status.style.color=''; status.textContent='กำลังสร้าง...';
+  try{
+    const existing = await db.ref(`sites/${newId}/settings`).once('value');
+    if(existing.exists()){
+      status.style.color='var(--err)';
+      status.textContent = 'รหัสงานนี้ถูกใช้ไปแล้ว ลองตั้งชื่ออื่น';
+      return;
+    }
+    await db.ref(`sites/${newId}/settings`).set({
+      folderId: parsedFolder,
+      adminPassword: pass,
+      brand: brand,
+      coupleNames: couple,
+    });
+    const link = `${location.origin}${location.pathname}?site=${newId}`;
+    document.getElementById('newSiteLinkOutput').value = link;
+    resultBox.style.display = 'block';
+    status.textContent = 'สร้างสำเร็จ ✓';
+    loadSitesList();
+  }catch(err){
+    status.style.color='var(--err)';
+    status.textContent = 'สร้างไม่สำเร็จ: ' + (err.message || err);
+  }
+});
+
+document.getElementById('copyNewSiteLinkBtn').addEventListener('click', () => {
+  const input = document.getElementById('newSiteLinkOutput');
+  input.select();
+  navigator.clipboard?.writeText(input.value).catch(() => {});
+});
+
+async function loadSitesList(){
+  const wrap = document.getElementById('sitesListWrap');
+  const status = document.getElementById('sitesListStatus');
+  if(!firebaseReady){
+    wrap.innerHTML = '';
+    status.textContent = 'ยังไม่ได้ตั้งค่า Firebase ใน config.js';
+    return;
+  }
+  status.textContent = 'กำลังโหลด...';
+  try{
+    const snap = await db.ref('sites').once('value');
+    const data = snap.val() || {};
+    const ids = Object.keys(data);
+    if(ids.length === 0){
+      wrap.innerHTML = '<div class="admin-status">ยังไม่มีงานที่สร้างไว้</div>';
+      status.textContent = '';
+      return;
+    }
+    wrap.innerHTML = '';
+    ids.forEach((id) => {
+      const s = (data[id] && data[id].settings) || {};
+      const link = `${location.origin}${location.pathname}?site=${id}`;
+      const row = document.createElement('div');
+      row.className = 'sites-list-item';
+      row.innerHTML = `
+        <div>
+          <div class="sites-list-name">${s.coupleNames || s.brand || '(ยังไม่ตั้งชื่อ)'}</div>
+          <div class="sites-list-id">${id}</div>
+        </div>
+        <div class="sites-list-actions">
+          <button class="sites-list-copy">คัดลอกลิงก์</button>
+          <button class="sites-list-delete">ลบ</button>
+        </div>
+      `;
+      row.querySelector('.sites-list-copy').addEventListener('click', () => {
+        navigator.clipboard?.writeText(link).catch(() => {});
+      });
+      row.querySelector('.sites-list-delete').addEventListener('click', async () => {
+        const ok = window.confirm(
+          `ยืนยันลบงาน "${s.coupleNames || s.brand || id}" (${id}) ?\n\nการลบนี้จะลบการตั้งค่าทั้งหมดของงานนี้ออกจาก Firebase ถาวร กู้คืนไม่ได้ และลูกค้าที่ใช้ลิงก์นี้อยู่จะเข้าใช้งานต่อไม่ได้`
+        );
+        if(!ok) return;
+        try{
+          await db.ref(`sites/${id}`).remove();
+          loadSitesList();
+        }catch(err){
+          status.textContent = 'ลบไม่สำเร็จ: ' + (err.message || err);
+        }
+      });
+      wrap.appendChild(row);
+    });
+    status.textContent = `ทั้งหมด ${ids.length} งาน`;
+  }catch(err){
+    status.textContent = 'โหลดรายชื่อไม่สำเร็จ: ' + (err.message || err);
+  }
+}
+document.getElementById('refreshSitesBtn').addEventListener('click', loadSitesList);
+
+// เปิดหน้าล็อกอินผู้ดูแลระบบให้อัตโนมัติถ้าลิงก์มี ?superadmin=1
+// โหมดนี้จะ "ไม่โหลดแกลเลอรีของงานไหนเลย" (ซ่อนหน้าแขก + ข้ามการดึงรูปจาก Google Drive
+// ทั้งหมด) เพื่อไม่ให้ผู้ดูแลระบบเห็นรูปของงานใดงานหนึ่งปนอยู่โดยไม่ได้ตั้งใจ
+if(isSuperAdminUrl){
+  guestPage.classList.add('hidden');
+  bottomToolbar.style.display = 'none';
+  hideBanner();
+  openSuperAdminLogin();
+} else {
+  // ---- boot ----
+  showBanner('loading', lang==='th' ? 'กำลังเชื่อมต่อ Google Drive...' : 'Connecting to Google Drive...');
+  (async () => {
+    await loadAllSettings();
+    await refresh();
+  })();
+  setInterval(refresh, POLL_MS);
+}
 </script>
 
 </body>
