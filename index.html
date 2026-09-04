@@ -906,7 +906,13 @@ btnDownload.addEventListener('click', () => {
   const ids = Array.from(selectedIds);
   ids.forEach((id) => {
     const a = document.createElement('a');
-    a.href = `https://drive.google.com/uc?export=download&id=${id}`;
+    // ใช้ Drive API v3 (alt=media) แทนลิงก์ drive.google.com/uc?export=download แบบเดิม
+    // ลิงก์แบบเก่านี้ Google ทยอยจำกัดการใช้งานมาเรื่อยๆ — ไฟล์ที่ไม่เล็กมากจะเจอหน้า "Google
+    // Drive ไม่สามารถสแกนไวรัสให้ไฟล์นี้ได้" คั่นแทนที่จะดาวน์โหลดตรงๆ ต้องกดยืนยันซ้ำเองทีละไฟล์
+    // (พอเลือกหลายรูปพร้อมกันเลยดูเหมือนกดดาวน์โหลดแล้วไม่มีอะไรเกิดขึ้น) จุดนี้ใช้ API key ตัว
+    // เดียวกับที่ใช้ดึงรายชื่อรูปอยู่แล้ว ผ่านเส้นทางที่ Google รองรับอย่างเป็นทางการสำหรับ
+    // ดาวน์โหลดไฟล์ จึงไม่เจอหน้าคั่นนี้
+    a.href = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`;
     a.target = '_blank';
     a.rel = 'noopener';
     document.body.appendChild(a);
